@@ -428,10 +428,10 @@ class CrosswordApp {
     userCard.className = 'user-card';
     userCard.innerHTML = `
       <input type="text" id="user-name" placeholder="이름" maxlength="10">
-      <select id="user-dept">
-        <option value="">부서 선택</option>
-        ${this.departments.map(d => `<option>${d}</option>`).join('')}
-      </select>
+      <input type="text" id="user-dept" placeholder="부서" maxlength="20" list="dept-suggestions">
+      <datalist id="dept-suggestions">
+        ${this.departments.map(d => `<option value="${d}">`).join('')}
+      </datalist>
     `;
     app.appendChild(userCard);
 
@@ -559,7 +559,7 @@ class CrosswordApp {
       this.saveDraft();
       this.updateSubmitState();
     });
-    document.getElementById('user-dept').addEventListener('change', () => {
+    document.getElementById('user-dept').addEventListener('input', () => {
       this.saveDraft();
       this.updateSubmitState();
     });
@@ -776,7 +776,7 @@ class CrosswordApp {
       }
     }
     const name = document.getElementById('user-name')?.value.trim() || '';
-    const dept = document.getElementById('user-dept')?.value || '';
+    const dept = document.getElementById('user-dept')?.value.trim() || '';
     const btn = document.getElementById('btn-submit');
     if (this.userSubmitted) {
       btn.textContent = '제출됨';
@@ -836,7 +836,7 @@ class CrosswordApp {
   async submit() {
     if (this.userSubmitted) return;
     const name = document.getElementById('user-name').value.trim();
-    const dept = document.getElementById('user-dept').value;
+    const dept = document.getElementById('user-dept').value.trim();
     if (!name || !dept) {
       this.showToast('이름·부서를 입력해주세요', 'error');
       return;
