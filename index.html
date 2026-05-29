@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>ìì  ê°ë¡ì¸ë¡ í¼ì¦</title>
+<title>안전 가로세로 퍼즐</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
   html, body {
@@ -19,7 +19,7 @@
     padding-bottom: 100px;
   }
 
-  /* ==== ìë¨ ë° ==== */
+  /* ==== 상단 바 ==== */
   .top-bar {
     position: sticky;
     top: 0;
@@ -46,7 +46,7 @@
   }
   .progress-pill.full { background: #2e7d32; }
 
-  /* ==== ì¬ì©ì ì ë³´ ì¹´ë ==== */
+  /* ==== 사용자 정보 카드 ==== */
   .user-card {
     background: #fff;
     margin: 12px;
@@ -76,7 +76,7 @@
     border-color: #c8102e !important;
   }
 
-  /* ==== ê·¸ë¦¬ë ==== */
+  /* ==== 그리드 ==== */
   .grid-wrap {
     margin: 0 12px;
     background: #fff;
@@ -135,7 +135,7 @@
     caret-color: transparent;
   }
 
-  /* ==== íí¸ ë° (íë¨ ê³ ì ) ==== */
+  /* ==== 힌트 바 (하단 고정) ==== */
   .clue-bar {
     position: fixed;
     left: 0;
@@ -213,7 +213,7 @@
   }
   .submit-btn:not(:disabled):active { background: #a00d24; }
 
-  /* ==== ì ì¶ ìë£ íë©´ ==== */
+  /* ==== 제출 완료 화면 ==== */
   .done-overlay {
     display: none;
     position: fixed;
@@ -269,7 +269,7 @@
     line-height: 1.5;
   }
 
-  /* ==== ìë¬ ë©ìì§ ==== */
+  /* ==== 에러 메시지 ==== */
   .toast {
     position: fixed;
     bottom: 130px;
@@ -290,7 +290,7 @@
   .toast.error { background: #c8102e; }
   .toast.success { background: #2e7d32; }
 
-  /* ==== ë¡ë©/ìë¬ ==== */
+  /* ==== 로딩/에러 ==== */
   .loading, .error-screen {
     text-align: center;
     padding: 60px 20px;
@@ -302,35 +302,35 @@
 <body>
 
 <div class="top-bar">
-  <div class="top-title">ð§© ìì  ê°ë¡ì¸ë¡ í¼ì¦</div>
+  <div class="top-title">🧩 안전 가로세로 퍼즐</div>
   <div class="progress-pill" id="prog-pill">
     <span id="prog-cur">0</span> / <span id="prog-total">0</span>
   </div>
 </div>
 
 <div id="app">
-  <div class="loading">ë¶ë¬ì¤ë ì¤...</div>
+  <div class="loading">불러오는 중...</div>
 </div>
 
 <div class="clue-bar" id="clue-bar" style="display:none;">
   <div class="clue-meta">
-    <span class="clue-dir-label" id="clue-dir-label">ê°ë¡</span>
-    <span id="clue-num-text">ìì í­íì¬ ììíì¸ì</span>
+    <span class="clue-dir-label" id="clue-dir-label">가로</span>
+    <span id="clue-num-text">셀을 탭하여 시작하세요</span>
   </div>
-  <div class="clue-text" id="clue-text">ë¨¼ì  ì´ë¦ê³¼ ë¶ìë¥¼ ìë ¥íì¸ì</div>
+  <div class="clue-text" id="clue-text">먼저 이름과 부서를 입력하세요</div>
   <div class="clue-nav">
-    <button class="nav-btn" id="btn-prev">â ì´ì </button>
-    <button class="nav-btn toggle" id="btn-toggle">â ë°©í¥</button>
-    <button class="nav-btn" id="btn-next">ë¤ì â¶</button>
-    <button class="submit-btn" id="btn-submit" disabled>ì ì¶</button>
+    <button class="nav-btn" id="btn-prev">◀ 이전</button>
+    <button class="nav-btn toggle" id="btn-toggle">↔ 방향</button>
+    <button class="nav-btn" id="btn-next">다음 ▶</button>
+    <button class="submit-btn" id="btn-submit" disabled>제출</button>
   </div>
 </div>
 
 <div class="done-overlay" id="done-overlay">
   <div class="done-card">
-    <div class="done-icon">â</div>
-    <div class="done-title">ì ì¶ ìë£!</div>
-    <div class="done-text">ì°¸ì¬í´ì£¼ìì ê°ì¬í©ëë¤.<br>ëª¨ë  ì ëµì ì¤ ì¶ì²¨íì¬ ë¹ì²¨ìë¥¼ ê³µì§í©ëë¤.</div>
+    <div class="done-icon">✓</div>
+    <div class="done-title">제출 완료!</div>
+    <div class="done-text">참여해주셔서 감사합니다.<br>모든 정답자 중 추첨하여 당첨자를 공지합니다.</div>
     <div class="done-info" id="done-info"></div>
   </div>
 </div>
@@ -339,12 +339,12 @@
 
 <script>
 // ============================================
-// í¼ì¦ ë°ì´í° â ìëí°ìì ìë ì£¼ìë¨
+// 퍼즐 데이터 — 에디터에서 자동 주입됨
 window.__PUZZLE_DATA__ = {"gridSize":12,"words":[{"word":"방진마스크","hint":"분진을 막아주는 호흡 보호구","r":3,"c":3,"dir":"H","placed":true},{"word":"추락방지","hint":"높은 곳에서 사람이 떨어지는 것을 예방하거나 막는 조치.","r":1,"c":3,"dir":"V","placed":true},{"word":"귀마개","hint":"소음 작업장에서 귀에 끼는 보호구","r":2,"c":5,"dir":"V","placed":true},{"word":"경고표지","hint":"위험한 화학물질의 유해성과 취급 시 주의사항을 그림과 문구로 알리는 표시","r":4,"c":0,"dir":"H","placed":true},{"word":"안전모","hint":"머리를 보호하는 노란색 장비","r":0,"c":0,"dir":"H","placed":true},{"word":"안전화","hint":"미끄럼·찔림 방지 발 보호구","r":0,"c":0,"dir":"V","placed":true},{"word":"보호구","hint":"위험으로부터 작업자를 지키는 장비 통칭","r":9,"c":11,"dir":"V","placed":true},{"word":"비상구","hint":"화재 시 대피하는 초록색 표지의 출구","r":11,"c":9,"dir":"H","placed":true},{"word":"위험성평가","hint":"위험 빈도·강도를 점수화하는 ○○○○○","r":1,"c":10,"dir":"V","placed":true},{"word":"작업허가서","hint":"위험작업 전 받아야 하는 ○○○○○","r":5,"c":7,"dir":"H","placed":true},{"word":"유해물질","hint":"인체에 해로운 영향을 줄 수 있는 화학물질","r":11,"c":4,"dir":"H","placed":true},{"word":"정리정돈","hint":"5S의 첫 두 단계 ○○○○","r":6,"c":4,"dir":"V","placed":true},{"word":"TBM","hint":"작업 전 5분 회의의 영문 약자","r":0,"c":4,"dir":"H","placed":true},{"word":"누출","hint":"유해물질이 새어나오는 현상","r":10,"c":0,"dir":"H","placed":true},{"word":"안전점검","hint":"정기·일상·임시로 실시하는 ○○○○","r":7,"c":8,"dir":"H","placed":true},{"word":"위험물","hint":"인화성·폭발성 등이 있는 물질 통칭","r":9,"c":6,"dir":"V","placed":true},{"word":"보안경","hint":"분진·약품 튀김 막는 눈 보호구","r":6,"c":0,"dir":"H","placed":true},{"word":"안전대","hint":"추락 위험 작업 시 착용하는 벨트","r":6,"c":1,"dir":"V","placed":true},{"word":"화재","hint":"산소·연료·열원이 만나 발생하는 사고","r":2,"c":0,"dir":"H","placed":true},{"word":"정전","hint":"전기 공급이 끊김","r":6,"c":4,"dir":"H","placed":true},{"word":"점화","hint":"가연물에 불이 붙는 현상","r":7,"c":10,"dir":"V","placed":true},{"word":"위험","hint":"사고로 이어질 수 있는 상태","r":9,"c":6,"dir":"H","placed":true},{"word":"대피","hint":"위험 시 안전한 곳으로 이동","r":8,"c":1,"dir":"H","placed":true},{"word":"누전","hint":"전기가 새는 현상","r":10,"c":0,"dir":"V","placed":true},{"word":"치환","hint":"화재 삼요소 중 산소를 제어하는 방법. 질소OO","r":1,"c":7,"dir":"H","placed":true},{"word":"환기","hint":"밀폐공간 작업 전 반드시 확인해야 하는 안전 조치","r":1,"c":8,"dir":"V","placed":true}],"config":{"title":"안전 가로세로 퍼즐","draftId":"puzzle_2026-05-29"},"submitUrl":"https://script.google.com/macros/s/AKfycbzySgNgaavIHpBHD84QKJeU2n8qwR81dO1jKccCGss5lURSozPWfAgW8yAVOIvKIiAesA/exec","departments":["안전환경지원팀","생산1팀","생산2팀","생산3팀","품질관리팀","기술팀","연구개발","영업/관리/지원","기타"]};
 const PUZZLE_DATA = window.__PUZZLE_DATA__;
 
 // ============================================
-// ë©ì¸ ì± í´ëì¤
+// 메인 앱 클래스
 // ============================================
 class CrosswordApp {
   constructor(data) {
@@ -352,7 +352,7 @@ class CrosswordApp {
     this.words = data.words.filter(w => w.placed);
     this.config = data.config || {};
     this.submitUrl = data.submitUrl || '';
-    this.departments = data.departments || ['ìì íê²½ì§ìí', 'ìì°í', 'íì§í', 'ê¸°ì í', 'ì°êµ¬ê°ë°', 'ìì/ì§ì', 'ê¸°í'];
+    this.departments = data.departments || ['안전환경지원팀', '생산팀', '품질팀', '기술팀', '연구개발', '영업/지원', '기타'];
 
     this.grid = this.buildGrid();
     this.numbers = this.computeNumbers();
@@ -423,19 +423,19 @@ class CrosswordApp {
     const app = document.getElementById('app');
     app.innerHTML = '';
 
-    // ì¬ì©ì ì ë³´ ì¹´ë
+    // 사용자 정보 카드
     const userCard = document.createElement('div');
     userCard.className = 'user-card';
     userCard.innerHTML = `
-      <input type="text" id="user-name" placeholder="ì´ë¦" maxlength="10">
+      <input type="text" id="user-name" placeholder="이름" maxlength="10">
       <select id="user-dept">
-        <option value="">ë¶ì ì í</option>
+        <option value="">부서 선택</option>
         ${this.departments.map(d => `<option>${d}</option>`).join('')}
       </select>
     `;
     app.appendChild(userCard);
 
-    // ê·¸ë¦¬ë
+    // 그리드
     const gridWrap = document.createElement('div');
     gridWrap.className = 'grid-wrap';
     const gridEl = document.createElement('div');
@@ -463,7 +463,7 @@ class CrosswordApp {
 
           const input = document.createElement('input');
           input.className = 'cell-input';
-          input.maxLength = 2; // íê¸ ì¡°í© ì¤ ììë¡ 2ìê° ë¤ì´ê° ì ìì´ì
+          input.maxLength = 2; // 한글 조합 중 임시로 2자가 들어갈 수 있어서
           input.type = 'text';
           input.autocomplete = 'off';
           input.autocapitalize = 'none';
@@ -481,25 +481,25 @@ class CrosswordApp {
     gridWrap.appendChild(gridEl);
     app.appendChild(gridWrap);
 
-    // ì´ ì¹¸ ì íì
+    // 총 칸 수 표시
     let total = 0;
     for (const row of this.grid) for (const c of row) if (c.active) total++;
     document.getElementById('prog-total').textContent = total;
 
-    // íí¸ ë° ë³´ì´ê¸°
+    // 힌트 바 보이기
     document.getElementById('clue-bar').style.display = '';
 
     this.bindEvents();
   }
 
   bindEvents() {
-    // ì í´ë¦­ (inputì´ ìë ìì­ í´ë¦­ ì)
+    // 셀 클릭 (input이 아닌 영역 클릭 시)
     document.getElementById('grid').addEventListener('click', (e) => {
       const cell = e.target.closest('.cell.active');
       if (!cell) return;
       const r = +cell.dataset.r;
       const c = +cell.dataset.c;
-      // ê°ì ì ì¬í´ë¦­ ì ë°©í¥ í ê¸
+      // 같은 셀 재클릭 시 방향 토글
       if (r === this.currentR && c === this.currentC) {
         this.toggleDirection();
       } else {
@@ -507,7 +507,7 @@ class CrosswordApp {
       }
     });
 
-    // ëª¨ë  inputì ì´ë²¤í¸
+    // 모든 input에 이벤트
     this.inputByPos.forEach((input, key) => {
       const [r, c] = key.split(',').map(Number);
 
@@ -516,7 +516,7 @@ class CrosswordApp {
       });
 
       input.addEventListener('input', (e) => {
-        // IME ì¡°í© ì¤ìë í¨ì¤
+        // IME 조합 중에는 패스
         if (e.isComposing || e.inputType === 'insertCompositionText') return;
         this.handleInput(input, r, c);
       });
@@ -554,7 +554,7 @@ class CrosswordApp {
       });
     });
 
-    // ì¬ì©ì ì ë³´ ë³ê²½ ì ì ì¥ + ê²ì¦
+    // 사용자 정보 변경 시 저장 + 검증
     document.getElementById('user-name').addEventListener('input', () => {
       this.saveDraft();
       this.updateSubmitState();
@@ -564,7 +564,7 @@ class CrosswordApp {
       this.updateSubmitState();
     });
 
-    // ë²í¼
+    // 버튼
     document.getElementById('btn-prev').addEventListener('click', () => this.moveByWord(-1));
     document.getElementById('btn-next').addEventListener('click', () => this.moveByWord(1));
     document.getElementById('btn-toggle').addEventListener('click', () => this.toggleDirection());
@@ -573,9 +573,9 @@ class CrosswordApp {
 
   handleInput(input, r, c) {
     let v = input.value;
-    // ì²« ê¸ìë§ ì ì§ (íê¸ì´ë  ìë¬¸ì´ë )
+    // 첫 글자만 유지 (한글이든 영문이든)
     if (v.length > 1) v = v.charAt(0);
-    // ìë¬¸ì ëë¬¸ì
+    // 영문은 대문자
     if (/^[a-zA-Z]$/.test(v)) v = v.toUpperCase();
     input.value = v;
 
@@ -599,9 +599,9 @@ class CrosswordApp {
   setCurrent(r, c) {
     this.currentR = r;
     this.currentC = c;
-    // íì¬ ìì í´ë¹íë ë¨ì´ ì°¾ê¸°
+    // 현재 셀에 해당하는 단어 찾기
     const words = this.wordsByCell.get(`${r},${c}`) || [];
-    // íì¬ ë°©í¥ì´ ê°ë¥íì§ íì¸, ì ëë©´ ë¤ë¥¸ ë°©í¥ì¼ë¡
+    // 현재 방향이 가능한지 확인, 안 되면 다른 방향으로
     let dirWords = words.filter(w => w.dir === this.currentDir);
     if (dirWords.length === 0 && words.length > 0) {
       this.currentDir = words[0].dir;
@@ -612,14 +612,14 @@ class CrosswordApp {
   }
 
   updateHighlight() {
-    // ëª¨ë  íì´ë¼ì´í¸ ì ê±°
+    // 모든 하이라이트 제거
     this.cellByPos.forEach(cell => {
       cell.classList.remove('highlight', 'current-cell');
     });
 
     if (this.currentR < 0) return;
 
-    // íì¬ ë¨ì´ì ëª¨ë  ì íì´ë¼ì´í¸
+    // 현재 단어의 모든 셀 하이라이트
     const word = this.getCurrentWord();
     if (word) {
       for (let i = 0; i < word.word.length; i++) {
@@ -629,7 +629,7 @@ class CrosswordApp {
         if (cell) cell.classList.add('highlight');
       }
     }
-    // íì¬ ì
+    // 현재 셀
     const curCell = this.cellByPos.get(`${this.currentR},${this.currentC}`);
     if (curCell) curCell.classList.add('current-cell');
   }
@@ -649,17 +649,17 @@ class CrosswordApp {
     if (!word) {
       dirLabel.textContent = '-';
       dirLabel.className = 'clue-dir-label';
-      numText.textContent = 'ìì í­íì¬ ììíì¸ì';
+      numText.textContent = '셀을 탭하여 시작하세요';
       clueText.textContent = '';
       return;
     }
 
     const isV = word.dir === 'V';
-    dirLabel.textContent = isV ? 'ì¸ë¡' : 'ê°ë¡';
+    dirLabel.textContent = isV ? '세로' : '가로';
     dirLabel.className = 'clue-dir-label' + (isV ? ' v' : '');
     const n = this.numbers[`${word.r},${word.c}`];
-    numText.textContent = `${n}ë² (${word.word.length}ê¸ì)`;
-    clueText.textContent = word.hint || '(íí¸ ìì)';
+    numText.textContent = `${n}번 (${word.word.length}글자)`;
+    clueText.textContent = word.hint || '(힌트 없음)';
   }
 
   toggleDirection() {
@@ -670,15 +670,15 @@ class CrosswordApp {
       this.updateHighlight();
       this.updateClue();
     } else {
-      this.showToast('ì´ ìì ' + (otherDir === 'H' ? 'ê°ë¡' : 'ì¸ë¡') + ' ë¨ì´ê° ììµëë¤');
+      this.showToast('이 셀은 ' + (otherDir === 'H' ? '가로' : '세로') + ' 단어가 없습니다');
     }
   }
 
   advanceCursor() {
-    // íì¬ ë¨ì´ ë´ìì ë¤ì ìë¡
+    // 현재 단어 내에서 다음 셀로
     const word = this.getCurrentWord();
     if (!word) return;
-    // íì¬ ìì´ ë¨ì´ì ëª ë²ì§¸ì¸ì§
+    // 현재 셀이 단어의 몇 번째인지
     let idx = -1;
     for (let i = 0; i < word.word.length; i++) {
       const r = word.dir === 'V' ? word.r + i : word.r;
@@ -729,13 +729,13 @@ class CrosswordApp {
   }
 
   moveByWord(delta) {
-    // íì¬ ë¨ì´ ë¤ì/ì´ì  ë¨ì´ë¡
+    // 현재 단어 다음/이전 단어로
     const word = this.getCurrentWord();
     const sorted = [...this.words].sort((a, b) => {
       const na = this.numbers[`${a.r},${a.c}`];
       const nb = this.numbers[`${b.r},${b.c}`];
       if (na !== nb) return na - nb;
-      // ê°ì ììì ì´ë©´ H ë¨¼ì 
+      // 같은 시작점이면 H 먼저
       return a.dir === 'H' ? -1 : 1;
     });
     let idx = sorted.findIndex(w => w === word);
@@ -779,21 +779,21 @@ class CrosswordApp {
     const dept = document.getElementById('user-dept')?.value || '';
     const btn = document.getElementById('btn-submit');
     if (this.userSubmitted) {
-      btn.textContent = 'ì ì¶ë¨';
+      btn.textContent = '제출됨';
       btn.disabled = true;
       return;
     }
     if (filled === total && name && dept) {
       btn.disabled = false;
-      btn.textContent = 'ì ì¶';
+      btn.textContent = '제출';
     } else {
       btn.disabled = true;
-      if (!name || !dept) btn.textContent = 'ì´ë¦Â·ë¶ì ìë ¥';
-      else btn.textContent = `ë¨ì ${total - filled}ì¹¸`;
+      if (!name || !dept) btn.textContent = '이름·부서 입력';
+      else btn.textContent = `남은 ${total - filled}칸`;
     }
   }
 
-  // ==== ìì ì ì¥ ====
+  // ==== 임시 저장 ====
   draftKey() {
     return 'crossword_draft_' + (this.config.draftId || 'default');
   }
@@ -832,17 +832,17 @@ class CrosswordApp {
     } catch (e) {}
   }
 
-  // ==== ì ì¶ ====
+  // ==== 제출 ====
   async submit() {
     if (this.userSubmitted) return;
     const name = document.getElementById('user-name').value.trim();
     const dept = document.getElementById('user-dept').value;
     if (!name || !dept) {
-      this.showToast('ì´ë¦Â·ë¶ìë¥¼ ìë ¥í´ì£¼ì¸ì', 'error');
+      this.showToast('이름·부서를 입력해주세요', 'error');
       return;
     }
 
-    // ëµì ìì§
+    // 답안 수집
     const answers = {};
     let score = 0;
     let total = 0;
@@ -871,37 +871,37 @@ class CrosswordApp {
 
     const btn = document.getElementById('btn-submit');
     btn.disabled = true;
-    btn.textContent = 'ì ì¶ ì¤...';
+    btn.textContent = '제출 중...';
 
     if (!this.submitUrl) {
-      // ì ì¶ URL ìì¼ë©´ JSON ë¤ì´ë¡ë fallback (íì¤í¸ì©)
-      this.showToast('ì ì¶ URL ë¯¸ì¤ì  â JSON ë¤ì´ë¡ë', 'error');
+      // 제출 URL 없으면 JSON 다운로드 fallback (테스트용)
+      this.showToast('제출 URL 미설정 — JSON 다운로드', 'error');
       this.downloadJSON(payload);
       btn.disabled = false;
-      btn.textContent = 'ì ì¶';
+      btn.textContent = '제출';
       return;
     }
 
     try {
-      // Apps Scriptë CORS-friendly text/plainë¡ POST
+      // Apps Script는 CORS-friendly text/plain로 POST
       const res = await fetch(this.submitUrl, {
         method: 'POST',
         mode: 'no-cors',  // Apps Script web app default
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify(payload),
       });
-      // no-cors ì´ë¯ë¡ res ë´ì©ì íì¸ ë¶ê°, ê·¸ë¥ ì±ê³µì¼ë¡ ê°ì£¼
+      // no-cors 이므로 res 내용은 확인 불가, 그냥 성공으로 간주
       this.userSubmitted = true;
-      // ìì ì ì¥ ë¹ì°ê¸°
+      // 임시 저장 비우기
       localStorage.removeItem(this.draftKey());
-      // ìë£ íë©´
+      // 완료 화면
       document.getElementById('done-info').innerHTML = 
-        `<b>${name}</b>ë (${dept})<br>ì´ ${total}ë¬¸í­ ì¤ <b>${score}ë¬¸í­</b> ì ëµ<br>ì ì¶ ìê°: ${new Date().toLocaleString('ko-KR')}`;
+        `<b>${name}</b>님 (${dept})<br>총 ${total}문항 중 <b>${score}문항</b> 정답<br>제출 시각: ${new Date().toLocaleString('ko-KR')}`;
       document.getElementById('done-overlay').classList.add('show');
     } catch (e) {
-      this.showToast('ì ì¶ ì¤í¨: ' + e.message, 'error');
+      this.showToast('제출 실패: ' + e.message, 'error');
       btn.disabled = false;
-      btn.textContent = 'ë¤ì ì ì¶';
+      btn.textContent = '다시 제출';
     }
   }
 
@@ -924,12 +924,12 @@ class CrosswordApp {
 }
 
 // ============================================
-// ë¶í
+// 부팅
 // ============================================
 window.addEventListener('DOMContentLoaded', () => {
   if (!PUZZLE_DATA) {
     document.getElementById('app').innerHTML = 
-      '<div class="error-screen">â ï¸ í¼ì¦ ë°ì´í°ê° ììµëë¤.<br><br>ìëí°ìì ìëµ íì´ì§ë¥¼ ë¤ì ìì±í´ì£¼ì¸ì.</div>';
+      '<div class="error-screen">⚠️ 퍼즐 데이터가 없습니다.<br><br>에디터에서 응답 페이지를 다시 생성해주세요.</div>';
     return;
   }
   try {
@@ -937,7 +937,7 @@ window.addEventListener('DOMContentLoaded', () => {
   } catch (e) {
     console.error(e);
     document.getElementById('app').innerHTML = 
-      '<div class="error-screen">â ï¸ ì´ê¸°í ì¤í¨: ' + e.message + '</div>';
+      '<div class="error-screen">⚠️ 초기화 실패: ' + e.message + '</div>';
   }
 });
 </script>
