@@ -146,12 +146,11 @@
       <span class="input-box-pos" id="ib-pos"></span>
     </div>
     <div class="input-box-hint" id="ib-hint"></div>
-    <input type="text" class="input-box-field" id="ib-field" maxlength="1" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
-    <div class="input-box-guide">한 글자 입력 후 '넣기'를 누르세요</div>
+    <input type="text" class="input-box-field" id="ib-field" maxlength="12" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+    <div class="input-box-guide" id="ib-guide">단어 전체를 입력하세요 (예: TBM)</div>
     <div class="input-box-btns">
-      <button class="ib-btn prev" id="ib-prev">◀</button>
       <button class="ib-btn cancel" id="ib-cancel">닫기</button>
-      <button class="ib-btn confirm" id="ib-confirm">넣기 ▶</button>
+      <button class="ib-btn confirm" id="ib-confirm">입력 완료 ▶</button>
     </div>
   </div>
 </div>
@@ -292,14 +291,13 @@ class CrosswordApp {
     document.getElementById('btn-submit').addEventListener('click', () => this.submit());
 
     // 팝업 버튼
-    document.getElementById('ib-confirm').addEventListener('click', () => this.confirmInput(true));
+    document.getElementById('ib-confirm').addEventListener('click', () => this.confirmWord());
     document.getElementById('ib-cancel').addEventListener('click', () => this.closeInput());
-    document.getElementById('ib-prev').addEventListener('click', () => this.gotoPrevCell());
 
     const field = document.getElementById('ib-field');
-    // 엔터 = 넣기
+    // 엔터 = 입력 완료
     field.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') { e.preventDefault(); this.confirmInput(true); }
+      if (e.key === 'Enter') { e.preventDefault(); this.confirmWord(); }
     });
     // 모달 바깥 탭하면 닫기
     document.getElementById('input-modal').addEventListener('click', (e) => {
@@ -319,79 +317,71 @@ class CrosswordApp {
     return -1;
   }
 
+  // 현재 단어의 칸들 좌표 배열
+  wordCells(word) {
+    const cells = [];
+    for (let i = 0; i < word.word.length; i++) {
+      const r = word.dir === 'V' ? word.r + i : word.r;
+      const c = word.dir === 'H' ? word.c + i : word.c;
+      cells.push([r, c]);
+    }
+    return cells;
+  }
+
+  // 현재 단어에 이미 입력된 글자들을 이어붙임
+  currentWordInput(word) {
+    return this.wordCells(word).map(([r, c]) => this.grid[r][c].input || '').join('');
+  }
+
   openInput() {
     const word = this.getCurrentWord();
     if (!word) return;
+    this.activeWord = word; // 현재 입력 중인 단어 고정
     const isV = word.dir === 'V';
     document.getElementById('ib-dir').textContent = isV ? '세로' : '가로';
     document.getElementById('ib-dir').className = 'input-box-dir' + (isV ? ' v' : '');
     const n = this.numbers[`${word.r},${word.c}`];
-    const idx = this.cellIndexInWord(word, this.curR, this.curC);
-    document.getElementById('ib-pos').textContent = `${n}번 (${word.word.length}글자) · ${idx+1}번째 칸`;
+    document.getElementById('ib-pos').textContent = `${n}번 · ${word.word.length}글자`;
     document.getElementById('ib-hint').textContent = word.hint || '(힌트 없음)';
+    document.getElementById('ib-guide').textContent = `${word.word.length}글자 단어 전체를 입력하세요`;
     const field = document.getElementById('ib-field');
-    field.value = this.grid[this.curR][this.curC].input || '';
+    field.maxLength = word.word.length;
+    field.value = this.currentWordInput(word); // 기존 입력 복원
     document.getElementById('input-modal').classList.add('show');
-    // 약간의 지연 후 포커스 (모바일 키보드)
     setTimeout(() => { field.focus(); field.select(); }, 100);
   }
 
   closeInput() {
     document.getElementById('input-modal').classList.remove('show');
     document.getElementById('ib-field').blur();
+    this.activeWord = null;
   }
 
-  confirmInput(advance) {
+  // 단어 전체 입력 → 각 칸에 분배
+  confirmWord() {
+    const word = this.activeWord || this.getCurrentWord();
+    if (!word) return;
     const field = document.getElementById('ib-field');
-    let v = field.value.trim();
-    if (v.length > 1) v = v.charAt(v.length - 1);
-    if (/[a-zA-Z]/.test(v)) v = v.toUpperCase();
-    this.grid[this.curR][this.curC].input = v;
-    this.renderCell(this.curR, this.curC);
+    let v = field.value.trim().toUpperCase();
+    // 단어 길이만큼만 사용
+    const cells = this.wordCells(word);
+    for (let i = 0; i < cells.length; i++) {
+      const [r, c] = cells[i];
+      const ch = v[i] || '';  // 입력이 짧으면 나머지는 빈칸
+      this.grid[r][c].input = ch;
+      this.renderCell(r, c);
+    }
     this.updateProgress();
     this.saveDraft();
-    if (advance) {
-      const moved = this.gotoNextCell();
-      if (moved) {
-        this.openInput(); // 다음 칸 팝업 갱신
-      } else {
-        this.closeInput();
-        this.showToast('이 단어를 다 채웠어요!', 'success');
-      }
+    this.closeInput();
+    // 입력 길이 안내
+    if (v.length > 0 && v.length < word.word.length) {
+      this.showToast(`${word.word.length}글자인데 ${v.length}글자만 입력됐어요`, 'error');
+    } else if (v.length > word.word.length) {
+      this.showToast(`${word.word.length}글자까지만 들어갑니다`, 'error');
+    } else if (v.length === word.word.length) {
+      this.showToast('입력 완료!', 'success');
     }
-  }
-
-  gotoNextCell() {
-    const word = this.getCurrentWord();
-    if (!word) return false;
-    const idx = this.cellIndexInWord(word, this.curR, this.curC);
-    if (idx >= 0 && idx + 1 < word.word.length) {
-      this.curR = word.dir==='V'?word.r+idx+1:word.r;
-      this.curC = word.dir==='H'?word.c+idx+1:word.c;
-      this.highlightCurrent();
-      return true;
-    }
-    return false;
-  }
-
-  gotoPrevCell() {
-    // 입력값 저장하고 이전 칸으로
-    this.confirmInput(false);
-    const word = this.getCurrentWord();
-    if (!word) return;
-    const idx = this.cellIndexInWord(word, this.curR, this.curC);
-    if (idx > 0) {
-      this.curR = word.dir==='V'?word.r+idx-1:word.r;
-      this.curC = word.dir==='H'?word.c+idx-1:word.c;
-      this.highlightCurrent();
-      this.openInput();
-    } else {
-      this.showToast('첫 칸입니다');
-    }
-  }
-
-  highlightCurrent() {
-    // 칸 색은 입력 여부로만 표시하므로 별도 처리 불필요
   }
 
   renderCell(r, c) {
