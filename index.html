@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>ìì  ê°ë¡ì¸ë¡ í¼ì¦</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    font-family: 'Pretendard', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+    background: #f5f5f0;
+    color: #1a1a1a;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  body {
+    max-width: 600px;
+    margin: 0 auto;
+    padding-bottom: 100px;
+  }
+
+  /* ==== ìë¨ ë° ==== */
+  .top-bar {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: #1a1a1a;
+    color: #fff;
+    padding: 12px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .top-title {
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+  .progress-pill {
+    background: #c8102e;
+    color: #fff;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 700;
+  }
+  .progress-pill.full { background: #2e7d32; }
+
+  /* ==== ì¬ì©ì ì ë³´ ì¹´ë ==== */
+  .user-card {
+    background: #fff;
+    margin: 12px;
+    padding: 14px;
+    border-radius: 10px;
+    border: 1px solid #e0e0d8;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .user-card input,
+  .user-card select {
+    padding: 10px 12px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    background: #fff;
+    width: 100%;
+  }
+  .user-card input:focus,
+  .user-card select:focus {
+    outline: 2px solid #1d4e89;
+    border-color: #1d4e89;
+  }
+  .user-card .err {
+    border-color: #c8102e !important;
+  }
+
+  /* ==== ê·¸ë¦¬ë ==== */
+  .grid-wrap {
+    margin: 0 12px;
+    background: #fff;
+    border-radius: 10px;
+    border: 1px solid #e0e0d8;
+    padding: 8px;
+    display: flex;
+    justify-content: center;
+  }
+  .grid {
+    display: grid;
+    gap: 1px;
+    background: #1a1a1a;
+    padding: 1px;
+    width: 100%;
+    max-width: 480px;
+    aspect-ratio: 1;
+  }
+  .cell {
+    background: #2a2a2a;
+    position: relative;
+    aspect-ratio: 1;
+  }
+  .cell.active {
+    background: #fff;
+  }
+  .cell.highlight {
+    background: #e3f2fd;
+  }
+  .cell.current-cell {
+    background: #ffcc80;
+  }
+  .cell-num {
+    position: absolute;
+    top: 1px;
+    left: 2px;
+    font-size: 8px;
+    color: #555;
+    font-weight: 700;
+    pointer-events: none;
+    line-height: 1;
+    z-index: 2;
+  }
+  .cell-input {
+    width: 100%;
+    height: 100%;
+    border: none;
+    background: transparent;
+    text-align: center;
+    font-size: 16px;
+    font-weight: 700;
+    color: #1a1a1a;
+    padding: 0;
+    outline: none;
+    font-family: inherit;
+    caret-color: transparent;
+  }
+
+  /* ==== íí¸ ë° (íë¨ ê³ ì ) ==== */
+  .clue-bar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: #fff;
+    border-top: 2px solid #1a1a1a;
+    box-shadow: 0 -4px 12px rgba(0,0,0,0.1);
+    z-index: 20;
+    padding: 12px 14px;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  .clue-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: #888;
+    font-weight: 700;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .clue-dir-label {
+    padding: 2px 8px;
+    border-radius: 3px;
+    background: #1d4e89;
+    color: #fff;
+    font-size: 10px;
+  }
+  .clue-dir-label.v { background: #c8102e; }
+  .clue-text {
+    font-size: 15px;
+    color: #1a1a1a;
+    line-height: 1.45;
+    font-weight: 500;
+    min-height: 22px;
+  }
+  .clue-nav {
+    display: flex;
+    gap: 6px;
+    margin-top: 10px;
+  }
+  .nav-btn {
+    flex: 1;
+    background: #f0f0f0;
+    border: none;
+    padding: 9px 6px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    color: #1a1a1a;
+  }
+  .nav-btn:active { background: #e0e0e0; }
+  .nav-btn.toggle { background: #1d4e89; color: #fff; }
+  .nav-btn.toggle:active { background: #0d3e79; }
+  .submit-btn {
+    flex: 1.5;
+    background: #c8102e;
+    color: #fff;
+    border: none;
+    padding: 9px 6px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+  }
+  .submit-btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+  }
+  .submit-btn:not(:disabled):active { background: #a00d24; }
+
+  /* ==== ì ì¶ ìë£ íë©´ ==== */
+  .done-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .done-overlay.show { display: flex; }
+  .done-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 36px 24px;
+    text-align: center;
+    max-width: 360px;
+    width: 100%;
+  }
+  .done-icon {
+    width: 70px;
+    height: 70px;
+    background: #2e7d32;
+    color: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 36px;
+    margin: 0 auto 18px;
+    font-weight: 700;
+  }
+  .done-title {
+    font-size: 22px;
+    font-weight: 800;
+    margin-bottom: 10px;
+    color: #1a1a1a;
+  }
+  .done-text {
+    color: #555;
+    font-size: 14px;
+    line-height: 1.6;
+    margin-bottom: 4px;
+  }
+  .done-info {
+    background: #f5f5f0;
+    border-radius: 8px;
+    padding: 12px;
+    margin-top: 16px;
+    font-size: 13px;
+    color: #555;
+    text-align: left;
+    line-height: 1.5;
+  }
+
+  /* ==== ìë¬ ë©ìì§ ==== */
+  .toast {
+    position: fixed;
+    bottom: 130px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1a1a1a;
+    color: #fff;
+    padding: 10px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    z-index: 50;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+  .toast.show { opacity: 1; }
+  .toast.error { background: #c8102e; }
+  .toast.success { background: #2e7d32; }
+
+  /* ==== ë¡ë©/ìë¬ ==== */
+  .loading, .error-screen {
+    text-align: center;
+    padding: 60px 20px;
+    color: #555;
+  }
+  .error-screen { color: #c8102e; }
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <div class="top-title">ð§© ìì  ê°ë¡ì¸ë¡ í¼ì¦</div>
+  <div class="progress-pill" id="prog-pill">
+    <span id="prog-cur">0</span> / <span id="prog-total">0</span>
+  </div>
+</div>
+
+<div id="app">
+  <div class="loading">ë¶ë¬ì¤ë ì¤...</div>
+</div>
+
+<div class="clue-bar" id="clue-bar" style="display:none;">
+  <div class="clue-meta">
+    <span class="clue-dir-label" id="clue-dir-label">ê°ë¡</span>
+    <span id="clue-num-text">ìì í­íì¬ ììíì¸ì</span>
+  </div>
+  <div class="clue-text" id="clue-text">ë¨¼ì  ì´ë¦ê³¼ ë¶ìë¥¼ ìë ¥íì¸ì</div>
+  <div class="clue-nav">
+    <button class="nav-btn" id="btn-prev">â ì´ì </button>
+    <button class="nav-btn toggle" id="btn-toggle">â ë°©í¥</button>
+    <button class="nav-btn" id="btn-next">ë¤ì â¶</button>
+    <button class="submit-btn" id="btn-submit" disabled>ì ì¶</button>
+  </div>
+</div>
+
+<div class="done-overlay" id="done-overlay">
+  <div class="done-card">
+    <div class="done-icon">â</div>
+    <div class="done-title">ì ì¶ ìë£!</div>
+    <div class="done-text">ì°¸ì¬í´ì£¼ìì ê°ì¬í©ëë¤.<br>ëª¨ë  ì ëµì ì¤ ì¶ì²¨íì¬ ë¹ì²¨ìë¥¼ ê³µì§í©ëë¤.</div>
+    <div class="done-info" id="done-info"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================
+// í¼ì¦ ë°ì´í° â ìëí°ìì ìë ì£¼ìë¨
+window.__PUZZLE_DATA__ = {"gridSize":12,"words":[{"word":"방진마스크","hint":"분진을 막아주는 호흡 보호구","r":3,"c":3,"dir":"H","placed":true},{"word":"추락방지","hint":"높은 곳에서 사람이 떨어지는 것을 예방하거나 막는 조치.","r":1,"c":3,"dir":"V","placed":true},{"word":"귀마개","hint":"소음 작업장에서 귀에 끼는 보호구","r":2,"c":5,"dir":"V","placed":true},{"word":"경고표지","hint":"위험한 화학물질의 유해성과 취급 시 주의사항을 그림과 문구로 알리는 표시","r":4,"c":0,"dir":"H","placed":true},{"word":"안전모","hint":"머리를 보호하는 노란색 장비","r":0,"c":0,"dir":"H","placed":true},{"word":"안전화","hint":"미끄럼·찔림 방지 발 보호구","r":0,"c":0,"dir":"V","placed":true},{"word":"보호구","hint":"위험으로부터 작업자를 지키는 장비 통칭","r":9,"c":11,"dir":"V","placed":true},{"word":"비상구","hint":"화재 시 대피하는 초록색 표지의 출구","r":11,"c":9,"dir":"H","placed":true},{"word":"위험성평가","hint":"위험 빈도·강도를 점수화하는 ○○○○○","r":1,"c":10,"dir":"V","placed":true},{"word":"작업허가서","hint":"위험작업 전 받아야 하는 ○○○○○","r":5,"c":7,"dir":"H","placed":true},{"word":"유해물질","hint":"인체에 해로운 영향을 줄 수 있는 화학물질","r":11,"c":4,"dir":"H","placed":true},{"word":"정리정돈","hint":"5S의 첫 두 단계 ○○○○","r":6,"c":4,"dir":"V","placed":true},{"word":"TBM","hint":"작업 전 5분 회의의 영문 약자","r":0,"c":4,"dir":"H","placed":true},{"word":"누출","hint":"유해물질이 새어나오는 현상","r":10,"c":0,"dir":"H","placed":true},{"word":"안전점검","hint":"정기·일상·임시로 실시하는 ○○○○","r":7,"c":8,"dir":"H","placed":true},{"word":"위험물","hint":"인화성·폭발성 등이 있는 물질 통칭","r":9,"c":6,"dir":"V","placed":true},{"word":"보안경","hint":"분진·약품 튀김 막는 눈 보호구","r":6,"c":0,"dir":"H","placed":true},{"word":"안전대","hint":"추락 위험 작업 시 착용하는 벨트","r":6,"c":1,"dir":"V","placed":true},{"word":"화재","hint":"산소·연료·열원이 만나 발생하는 사고","r":2,"c":0,"dir":"H","placed":true},{"word":"정전","hint":"전기 공급이 끊김","r":6,"c":4,"dir":"H","placed":true},{"word":"점화","hint":"가연물에 불이 붙는 현상","r":7,"c":10,"dir":"V","placed":true},{"word":"위험","hint":"사고로 이어질 수 있는 상태","r":9,"c":6,"dir":"H","placed":true},{"word":"대피","hint":"위험 시 안전한 곳으로 이동","r":8,"c":1,"dir":"H","placed":true},{"word":"누전","hint":"전기가 새는 현상","r":10,"c":0,"dir":"V","placed":true},{"word":"치환","hint":"화재 삼요소 중 산소를 제어하는 방법. 질소OO","r":1,"c":7,"dir":"H","placed":true},{"word":"환기","hint":"밀폐공간 작업 전 반드시 확인해야 하는 안전 조치","r":1,"c":8,"dir":"V","placed":true}],"config":{"title":"안전 가로세로 퍼즐","draftId":"puzzle_2026-05-29"},"submitUrl":"https://script.google.com/macros/s/AKfycbzySgNgaavIHpBHD84QKJeU2n8qwR81dO1jKccCGss5lURSozPWfAgW8yAVOIvKIiAesA/exec","departments":["안전환경지원팀","생산1팀","생산2팀","생산3팀","품질관리팀","기술팀","연구개발","영업/관리/지원","기타"]};
+const PUZZLE_DATA = window.__PUZZLE_DATA__;
+
+// ============================================
+// ë©ì¸ ì± í´ëì¤
+// ============================================
+class CrosswordApp {
+  constructor(data) {
+    this.size = data.gridSize;
+    this.words = data.words.filter(w => w.placed);
+    this.config = data.config || {};
+    this.submitUrl = data.submitUrl || '';
+    this.departments = data.departments || ['ìì íê²½ì§ìí', 'ìì°í', 'íì§í', 'ê¸°ì í', 'ì°êµ¬ê°ë°', 'ìì/ì§ì', 'ê¸°í'];
+
+    this.grid = this.buildGrid();
+    this.numbers = this.computeNumbers();
+    this.cellByPos = new Map(); // "r,c" -> cell element
+    this.inputByPos = new Map(); // "r,c" -> input element
+    this.wordsByCell = new Map(); // "r,c" -> [word, word]
+
+    this.currentR = -1;
+    this.currentC = -1;
+    this.currentDir = 'H';
+    this.userSubmitted = false;
+
+    this.indexWords();
+    this.render();
+    this.loadDraft();
+    this.updateProgress();
+  }
+
+  buildGrid() {
+    const g = [];
+    for (let r = 0; r < this.size; r++) {
+      g.push([]);
+      for (let c = 0; c < this.size; c++) {
+        g[r].push({ active: false, answer: '', input: '' });
+      }
+    }
+    for (const w of this.words) {
+      for (let i = 0; i < w.word.length; i++) {
+        const r = w.dir === 'V' ? w.r + i : w.r;
+        const c = w.dir === 'H' ? w.c + i : w.c;
+        if (r < this.size && c < this.size) {
+          g[r][c].active = true;
+          g[r][c].answer = w.word[i];
+        }
+      }
+    }
+    return g;
+  }
+
+  computeNumbers() {
+    const starts = new Set();
+    for (const w of this.words) {
+      starts.add(`${w.r},${w.c}`);
+    }
+    const sorted = [...starts].sort((a, b) => {
+      const [ra, ca] = a.split(',').map(Number);
+      const [rb, cb] = b.split(',').map(Number);
+      return ra !== rb ? ra - rb : ca - cb;
+    });
+    const map = {};
+    sorted.forEach((k, i) => { map[k] = i + 1; });
+    return map;
+  }
+
+  indexWords() {
+    for (const w of this.words) {
+      for (let i = 0; i < w.word.length; i++) {
+        const r = w.dir === 'V' ? w.r + i : w.r;
+        const c = w.dir === 'H' ? w.c + i : w.c;
+        const key = `${r},${c}`;
+        if (!this.wordsByCell.has(key)) this.wordsByCell.set(key, []);
+        this.wordsByCell.get(key).push(w);
+      }
+    }
+  }
+
+  render() {
+    const app = document.getElementById('app');
+    app.innerHTML = '';
+
+    // ì¬ì©ì ì ë³´ ì¹´ë
+    const userCard = document.createElement('div');
+    userCard.className = 'user-card';
+    userCard.innerHTML = `
+      <input type="text" id="user-name" placeholder="ì´ë¦" maxlength="10">
+      <select id="user-dept">
+        <option value="">ë¶ì ì í</option>
+        ${this.departments.map(d => `<option>${d}</option>`).join('')}
+      </select>
+    `;
+    app.appendChild(userCard);
+
+    // ê·¸ë¦¬ë
+    const gridWrap = document.createElement('div');
+    gridWrap.className = 'grid-wrap';
+    const gridEl = document.createElement('div');
+    gridEl.className = 'grid';
+    gridEl.id = 'grid';
+    gridEl.style.gridTemplateColumns = `repeat(${this.size}, 1fr)`;
+
+    for (let r = 0; r < this.size; r++) {
+      for (let c = 0; c < this.size; c++) {
+        const cell = document.createElement('div');
+        cell.className = 'cell';
+        cell.dataset.r = r;
+        cell.dataset.c = c;
+
+        if (this.grid[r][c].active) {
+          cell.classList.add('active');
+
+          const numKey = `${r},${c}`;
+          if (this.numbers[numKey]) {
+            const num = document.createElement('div');
+            num.className = 'cell-num';
+            num.textContent = this.numbers[numKey];
+            cell.appendChild(num);
+          }
+
+          const input = document.createElement('input');
+          input.className = 'cell-input';
+          input.maxLength = 2; // íê¸ ì¡°í© ì¤ ììë¡ 2ìê° ë¤ì´ê° ì ìì´ì
+          input.type = 'text';
+          input.autocomplete = 'off';
+          input.autocapitalize = 'none';
+          input.spellcheck = false;
+          input.dataset.r = r;
+          input.dataset.c = c;
+          cell.appendChild(input);
+
+          this.inputByPos.set(numKey, input);
+        }
+        this.cellByPos.set(`${r},${c}`, cell);
+        gridEl.appendChild(cell);
+      }
+    }
+    gridWrap.appendChild(gridEl);
+    app.appendChild(gridWrap);
+
+    // ì´ ì¹¸ ì íì
+    let total = 0;
+    for (const row of this.grid) for (const c of row) if (c.active) total++;
+    document.getElementById('prog-total').textContent = total;
+
+    // íí¸ ë° ë³´ì´ê¸°
+    document.getElementById('clue-bar').style.display = '';
+
+    this.bindEvents();
+  }
+
+  bindEvents() {
+    // ì í´ë¦­ (inputì´ ìë ìì­ í´ë¦­ ì)
+    document.getElementById('grid').addEventListener('click', (e) => {
+      const cell = e.target.closest('.cell.active');
+      if (!cell) return;
+      const r = +cell.dataset.r;
+      const c = +cell.dataset.c;
+      // ê°ì ì ì¬í´ë¦­ ì ë°©í¥ í ê¸
+      if (r === this.currentR && c === this.currentC) {
+        this.toggleDirection();
+      } else {
+        this.focusCell(r, c);
+      }
+    });
+
+    // ëª¨ë  inputì ì´ë²¤í¸
+    this.inputByPos.forEach((input, key) => {
+      const [r, c] = key.split(',').map(Number);
+
+      input.addEventListener('focus', () => {
+        this.setCurrent(r, c);
+      });
+
+      input.addEventListener('input', (e) => {
+        // IME ì¡°í© ì¤ìë í¨ì¤
+        if (e.isComposing || e.inputType === 'insertCompositionText') return;
+        this.handleInput(input, r, c);
+      });
+
+      input.addEventListener('compositionend', () => {
+        this.handleInput(input, r, c);
+      });
+
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Backspace' && input.value === '') {
+          e.preventDefault();
+          this.retreatCursor();
+        } else if (e.key === 'Delete') {
+          e.preventDefault();
+          input.value = '';
+          this.grid[r][c].input = '';
+          this.updateProgress();
+          this.saveDraft();
+        } else if (e.key === 'ArrowRight') {
+          e.preventDefault();
+          this.moveByDelta(0, 1);
+        } else if (e.key === 'ArrowLeft') {
+          e.preventDefault();
+          this.moveByDelta(0, -1);
+        } else if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          this.moveByDelta(1, 0);
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          this.moveByDelta(-1, 0);
+        } else if (e.key === 'Enter') {
+          e.preventDefault();
+          input.blur();
+        }
+      });
+    });
+
+    // ì¬ì©ì ì ë³´ ë³ê²½ ì ì ì¥ + ê²ì¦
+    document.getElementById('user-name').addEventListener('input', () => {
+      this.saveDraft();
+      this.updateSubmitState();
+    });
+    document.getElementById('user-dept').addEventListener('change', () => {
+      this.saveDraft();
+      this.updateSubmitState();
+    });
+
+    // ë²í¼
+    document.getElementById('btn-prev').addEventListener('click', () => this.moveByWord(-1));
+    document.getElementById('btn-next').addEventListener('click', () => this.moveByWord(1));
+    document.getElementById('btn-toggle').addEventListener('click', () => this.toggleDirection());
+    document.getElementById('btn-submit').addEventListener('click', () => this.submit());
+  }
+
+  handleInput(input, r, c) {
+    let v = input.value;
+    // ì²« ê¸ìë§ ì ì§ (íê¸ì´ë  ìë¬¸ì´ë )
+    if (v.length > 1) v = v.charAt(0);
+    // ìë¬¸ì ëë¬¸ì
+    if (/^[a-zA-Z]$/.test(v)) v = v.toUpperCase();
+    input.value = v;
+
+    this.grid[r][c].input = v;
+    this.updateProgress();
+    this.saveDraft();
+
+    if (v.length > 0) {
+      this.advanceCursor();
+    }
+  }
+
+  focusCell(r, c) {
+    const input = this.inputByPos.get(`${r},${c}`);
+    if (input) {
+      input.focus();
+      input.select();
+    }
+  }
+
+  setCurrent(r, c) {
+    this.currentR = r;
+    this.currentC = c;
+    // íì¬ ìì í´ë¹íë ë¨ì´ ì°¾ê¸°
+    const words = this.wordsByCell.get(`${r},${c}`) || [];
+    // íì¬ ë°©í¥ì´ ê°ë¥íì§ íì¸, ì ëë©´ ë¤ë¥¸ ë°©í¥ì¼ë¡
+    let dirWords = words.filter(w => w.dir === this.currentDir);
+    if (dirWords.length === 0 && words.length > 0) {
+      this.currentDir = words[0].dir;
+      dirWords = words;
+    }
+    this.updateHighlight();
+    this.updateClue();
+  }
+
+  updateHighlight() {
+    // ëª¨ë  íì´ë¼ì´í¸ ì ê±°
+    this.cellByPos.forEach(cell => {
+      cell.classList.remove('highlight', 'current-cell');
+    });
+
+    if (this.currentR < 0) return;
+
+    // íì¬ ë¨ì´ì ëª¨ë  ì íì´ë¼ì´í¸
+    const word = this.getCurrentWord();
+    if (word) {
+      for (let i = 0; i < word.word.length; i++) {
+        const r = word.dir === 'V' ? word.r + i : word.r;
+        const c = word.dir === 'H' ? word.c + i : word.c;
+        const cell = this.cellByPos.get(`${r},${c}`);
+        if (cell) cell.classList.add('highlight');
+      }
+    }
+    // íì¬ ì
+    const curCell = this.cellByPos.get(`${this.currentR},${this.currentC}`);
+    if (curCell) curCell.classList.add('current-cell');
+  }
+
+  getCurrentWord() {
+    if (this.currentR < 0) return null;
+    const words = this.wordsByCell.get(`${this.currentR},${this.currentC}`) || [];
+    return words.find(w => w.dir === this.currentDir) || words[0];
+  }
+
+  updateClue() {
+    const word = this.getCurrentWord();
+    const dirLabel = document.getElementById('clue-dir-label');
+    const numText = document.getElementById('clue-num-text');
+    const clueText = document.getElementById('clue-text');
+
+    if (!word) {
+      dirLabel.textContent = '-';
+      dirLabel.className = 'clue-dir-label';
+      numText.textContent = 'ìì í­íì¬ ììíì¸ì';
+      clueText.textContent = '';
+      return;
+    }
+
+    const isV = word.dir === 'V';
+    dirLabel.textContent = isV ? 'ì¸ë¡' : 'ê°ë¡';
+    dirLabel.className = 'clue-dir-label' + (isV ? ' v' : '');
+    const n = this.numbers[`${word.r},${word.c}`];
+    numText.textContent = `${n}ë² (${word.word.length}ê¸ì)`;
+    clueText.textContent = word.hint || '(íí¸ ìì)';
+  }
+
+  toggleDirection() {
+    const words = this.wordsByCell.get(`${this.currentR},${this.currentC}`) || [];
+    const otherDir = this.currentDir === 'H' ? 'V' : 'H';
+    if (words.some(w => w.dir === otherDir)) {
+      this.currentDir = otherDir;
+      this.updateHighlight();
+      this.updateClue();
+    } else {
+      this.showToast('ì´ ìì ' + (otherDir === 'H' ? 'ê°ë¡' : 'ì¸ë¡') + ' ë¨ì´ê° ììµëë¤');
+    }
+  }
+
+  advanceCursor() {
+    // íì¬ ë¨ì´ ë´ìì ë¤ì ìë¡
+    const word = this.getCurrentWord();
+    if (!word) return;
+    // íì¬ ìì´ ë¨ì´ì ëª ë²ì§¸ì¸ì§
+    let idx = -1;
+    for (let i = 0; i < word.word.length; i++) {
+      const r = word.dir === 'V' ? word.r + i : word.r;
+      const c = word.dir === 'H' ? word.c + i : word.c;
+      if (r === this.currentR && c === this.currentC) { idx = i; break; }
+    }
+    if (idx < 0) return;
+    if (idx + 1 < word.word.length) {
+      const nr = word.dir === 'V' ? word.r + idx + 1 : word.r;
+      const nc = word.dir === 'H' ? word.c + idx + 1 : word.c;
+      this.focusCell(nr, nc);
+    }
+  }
+
+  retreatCursor() {
+    const word = this.getCurrentWord();
+    if (!word) return;
+    let idx = -1;
+    for (let i = 0; i < word.word.length; i++) {
+      const r = word.dir === 'V' ? word.r + i : word.r;
+      const c = word.dir === 'H' ? word.c + i : word.c;
+      if (r === this.currentR && c === this.currentC) { idx = i; break; }
+    }
+    if (idx > 0) {
+      const nr = word.dir === 'V' ? word.r + idx - 1 : word.r;
+      const nc = word.dir === 'H' ? word.c + idx - 1 : word.c;
+      const prevInput = this.inputByPos.get(`${nr},${nc}`);
+      if (prevInput) {
+        prevInput.value = '';
+        this.grid[nr][nc].input = '';
+        this.focusCell(nr, nc);
+        this.updateProgress();
+        this.saveDraft();
+      }
+    }
+  }
+
+  moveByDelta(dr, dc) {
+    let r = this.currentR + dr;
+    let c = this.currentC + dc;
+    while (r >= 0 && r < this.size && c >= 0 && c < this.size) {
+      if (this.grid[r][c].active) {
+        this.focusCell(r, c);
+        return;
+      }
+      r += dr; c += dc;
+    }
+  }
+
+  moveByWord(delta) {
+    // íì¬ ë¨ì´ ë¤ì/ì´ì  ë¨ì´ë¡
+    const word = this.getCurrentWord();
+    const sorted = [...this.words].sort((a, b) => {
+      const na = this.numbers[`${a.r},${a.c}`];
+      const nb = this.numbers[`${b.r},${b.c}`];
+      if (na !== nb) return na - nb;
+      // ê°ì ììì ì´ë©´ H ë¨¼ì 
+      return a.dir === 'H' ? -1 : 1;
+    });
+    let idx = sorted.findIndex(w => w === word);
+    if (idx < 0) idx = 0;
+    let next = (idx + delta + sorted.length) % sorted.length;
+    const nextWord = sorted[next];
+    this.currentDir = nextWord.dir;
+    this.focusCell(nextWord.r, nextWord.c);
+  }
+
+  updateProgress() {
+    let filled = 0;
+    let total = 0;
+    for (let r = 0; r < this.size; r++) {
+      for (let c = 0; c < this.size; c++) {
+        if (this.grid[r][c].active) {
+          total++;
+          if (this.grid[r][c].input) filled++;
+        }
+      }
+    }
+    document.getElementById('prog-cur').textContent = filled;
+    const pill = document.getElementById('prog-pill');
+    if (filled === total && total > 0) pill.classList.add('full');
+    else pill.classList.remove('full');
+    this.updateSubmitState();
+  }
+
+  updateSubmitState() {
+    let filled = 0;
+    let total = 0;
+    for (let r = 0; r < this.size; r++) {
+      for (let c = 0; c < this.size; c++) {
+        if (this.grid[r][c].active) {
+          total++;
+          if (this.grid[r][c].input) filled++;
+        }
+      }
+    }
+    const name = document.getElementById('user-name')?.value.trim() || '';
+    const dept = document.getElementById('user-dept')?.value || '';
+    const btn = document.getElementById('btn-submit');
+    if (this.userSubmitted) {
+      btn.textContent = 'ì ì¶ë¨';
+      btn.disabled = true;
+      return;
+    }
+    if (filled === total && name && dept) {
+      btn.disabled = false;
+      btn.textContent = 'ì ì¶';
+    } else {
+      btn.disabled = true;
+      if (!name || !dept) btn.textContent = 'ì´ë¦Â·ë¶ì ìë ¥';
+      else btn.textContent = `ë¨ì ${total - filled}ì¹¸`;
+    }
+  }
+
+  // ==== ìì ì ì¥ ====
+  draftKey() {
+    return 'crossword_draft_' + (this.config.draftId || 'default');
+  }
+  saveDraft() {
+    try {
+      const draft = {
+        inputs: {},
+        name: document.getElementById('user-name')?.value || '',
+        dept: document.getElementById('user-dept')?.value || ''
+      };
+      for (let r = 0; r < this.size; r++) {
+        for (let c = 0; c < this.size; c++) {
+          if (this.grid[r][c].active && this.grid[r][c].input) {
+            draft.inputs[`${r},${c}`] = this.grid[r][c].input;
+          }
+        }
+      }
+      localStorage.setItem(this.draftKey(), JSON.stringify(draft));
+    } catch (e) {}
+  }
+  loadDraft() {
+    try {
+      const raw = localStorage.getItem(this.draftKey());
+      if (!raw) return;
+      const draft = JSON.parse(raw);
+      for (const [key, v] of Object.entries(draft.inputs || {})) {
+        const [r, c] = key.split(',').map(Number);
+        if (this.grid[r] && this.grid[r][c] && this.grid[r][c].active) {
+          this.grid[r][c].input = v;
+          const input = this.inputByPos.get(key);
+          if (input) input.value = v;
+        }
+      }
+      if (draft.name) document.getElementById('user-name').value = draft.name;
+      if (draft.dept) document.getElementById('user-dept').value = draft.dept;
+    } catch (e) {}
+  }
+
+  // ==== ì ì¶ ====
+  async submit() {
+    if (this.userSubmitted) return;
+    const name = document.getElementById('user-name').value.trim();
+    const dept = document.getElementById('user-dept').value;
+    if (!name || !dept) {
+      this.showToast('ì´ë¦Â·ë¶ìë¥¼ ìë ¥í´ì£¼ì¸ì', 'error');
+      return;
+    }
+
+    // ëµì ìì§
+    const answers = {};
+    let score = 0;
+    let total = 0;
+    for (const w of this.words) {
+      let userAnswer = '';
+      for (let i = 0; i < w.word.length; i++) {
+        const r = w.dir === 'V' ? w.r + i : w.r;
+        const c = w.dir === 'H' ? w.c + i : w.c;
+        userAnswer += this.grid[r][c].input || '';
+      }
+      const num = this.numbers[`${w.r},${w.c}`];
+      const key = `${num}${w.dir}`;
+      answers[key] = userAnswer;
+      total++;
+      if (userAnswer === w.word) score++;
+    }
+
+    const payload = {
+      timestamp: new Date().toISOString(),
+      name, dept,
+      answers,
+      score,
+      total,
+      ua: navigator.userAgent.slice(0, 100)
+    };
+
+    const btn = document.getElementById('btn-submit');
+    btn.disabled = true;
+    btn.textContent = 'ì ì¶ ì¤...';
+
+    if (!this.submitUrl) {
+      // ì ì¶ URL ìì¼ë©´ JSON ë¤ì´ë¡ë fallback (íì¤í¸ì©)
+      this.showToast('ì ì¶ URL ë¯¸ì¤ì  â JSON ë¤ì´ë¡ë', 'error');
+      this.downloadJSON(payload);
+      btn.disabled = false;
+      btn.textContent = 'ì ì¶';
+      return;
+    }
+
+    try {
+      // Apps Scriptë CORS-friendly text/plainë¡ POST
+      const res = await fetch(this.submitUrl, {
+        method: 'POST',
+        mode: 'no-cors',  // Apps Script web app default
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(payload),
+      });
+      // no-cors ì´ë¯ë¡ res ë´ì©ì íì¸ ë¶ê°, ê·¸ë¥ ì±ê³µì¼ë¡ ê°ì£¼
+      this.userSubmitted = true;
+      // ìì ì ì¥ ë¹ì°ê¸°
+      localStorage.removeItem(this.draftKey());
+      // ìë£ íë©´
+      document.getElementById('done-info').innerHTML = 
+        `<b>${name}</b>ë (${dept})<br>ì´ ${total}ë¬¸í­ ì¤ <b>${score}ë¬¸í­</b> ì ëµ<br>ì ì¶ ìê°: ${new Date().toLocaleString('ko-KR')}`;
+      document.getElementById('done-overlay').classList.add('show');
+    } catch (e) {
+      this.showToast('ì ì¶ ì¤í¨: ' + e.message, 'error');
+      btn.disabled = false;
+      btn.textContent = 'ë¤ì ì ì¶';
+    }
+  }
+
+  downloadJSON(payload) {
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `submission_${Date.now()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  showToast(msg, type = '') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast show ' + type;
+    setTimeout(() => { t.className = 'toast ' + type; }, 2500);
+  }
+}
+
+// ============================================
+// ë¶í
+// ============================================
+window.addEventListener('DOMContentLoaded', () => {
+  if (!PUZZLE_DATA) {
+    document.getElementById('app').innerHTML = 
+      '<div class="error-screen">â ï¸ í¼ì¦ ë°ì´í°ê° ììµëë¤.<br><br>ìëí°ìì ìëµ íì´ì§ë¥¼ ë¤ì ìì±í´ì£¼ì¸ì.</div>';
+    return;
+  }
+  try {
+    new CrosswordApp(PUZZLE_DATA);
+  } catch (e) {
+    console.error(e);
+    document.getElementById('app').innerHTML = 
+      '<div class="error-screen">â ï¸ ì´ê¸°í ì¤í¨: ' + e.message + '</div>';
+  }
+});
+</script>
+</body>
+</html>
