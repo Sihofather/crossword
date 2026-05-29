@@ -8,39 +8,34 @@
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
   html, body {
     font-family: 'Pretendard', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
-    background: #f5f5f0;
-    color: #1a1a1a;
-    min-height: 100vh;
-    overflow-x: hidden;
+    background: #f5f5f0; color: #1a1a1a; min-height: 100vh; overflow-x: hidden;
   }
   body { max-width: 600px; margin: 0 auto; padding-bottom: 130px; }
   .top-bar {
     position: sticky; top: 0; z-index: 10;
-    background: #1a1a1a; color: #fff;
-    padding: 12px 16px;
+    background: #1a1a1a; color: #fff; padding: 12px 16px;
     display: flex; justify-content: space-between; align-items: center;
   }
   .top-title { font-size: 15px; font-weight: 700; }
-  .progress-pill {
-    background: #c8102e; color: #fff;
-    padding: 4px 10px; border-radius: 12px;
-    font-size: 12px; font-weight: 700;
-  }
+  .progress-pill { background: #c8102e; color: #fff; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 700; }
   .progress-pill.full { background: #2e7d32; }
   .user-card {
-    background: #fff; margin: 12px; padding: 14px;
-    border-radius: 10px; border: 1px solid #e0e0d8;
+    background: #fff; margin: 12px; padding: 14px; border-radius: 10px; border: 1px solid #e0e0d8;
     display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
   }
   .user-card input {
     padding: 10px 12px; border: 1px solid #ccc; border-radius: 6px;
-    font-size: 14px; font-family: inherit; background: #fff; width: 100%;
+    font-size: 16px; font-family: inherit; background: #fff; width: 100%;
   }
   .user-card input:focus { outline: 2px solid #1d4e89; border-color: #1d4e89; }
+  .hint-tip {
+    margin: 0 12px 12px; padding: 10px 14px; background: #fff8e1;
+    border-left: 3px solid #ffa000; border-radius: 6px;
+    font-size: 13px; color: #7a5c00; line-height: 1.5;
+  }
   .grid-wrap {
     margin: 0 12px; background: #fff; border-radius: 10px;
-    border: 1px solid #e0e0d8; padding: 8px;
-    display: flex; justify-content: center;
+    border: 1px solid #e0e0d8; padding: 8px; display: flex; justify-content: center;
   }
   .grid {
     display: grid; gap: 1px; background: #1a1a1a; padding: 1px;
@@ -51,40 +46,66 @@
     display: flex; align-items: center; justify-content: center;
   }
   .cell.active { background: #fff; cursor: pointer; }
-  .cell.highlight { background: #e3f2fd; }
-  .cell.current-cell { background: #ffcc80; }
+  .cell.active:active { background: #e3f2fd; }
+  .cell.filled { background: #f0f7ff; }
   .cell-num {
-    position: absolute; top: 1px; left: 2px;
-    font-size: 8px; color: #555; font-weight: 700;
-    line-height: 1; z-index: 2; pointer-events: none;
+    position: absolute; top: 1px; left: 2px; font-size: 8px; color: #555;
+    font-weight: 700; line-height: 1; z-index: 2; pointer-events: none;
   }
   .cell-letter { font-size: 17px; font-weight: 700; color: #1a1a1a; line-height: 1; pointer-events: none; }
-  .hidden-input {
-    position: fixed; opacity: 0; pointer-events: none;
-    top: -100px; left: 0; width: 1px; height: 1px; font-size: 16px;
+
+  /* 입력 팝업 */
+  .input-modal {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+    z-index: 60; align-items: center; justify-content: center; padding: 24px;
   }
+  .input-modal.show { display: flex; }
+  .input-box {
+    background: #fff; border-radius: 16px; padding: 22px 20px;
+    width: 100%; max-width: 340px; box-shadow: 0 10px 40px rgba(0,0,0,0.25);
+  }
+  .input-box-head {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 6px;
+  }
+  .input-box-dir {
+    padding: 3px 10px; border-radius: 4px; background: #1d4e89; color: #fff;
+    font-size: 12px; font-weight: 700;
+  }
+  .input-box-dir.v { background: #c8102e; }
+  .input-box-pos { font-size: 13px; color: #888; font-weight: 600; }
+  .input-box-hint {
+    font-size: 15px; color: #1a1a1a; line-height: 1.4; margin-bottom: 16px;
+    font-weight: 500;
+  }
+  .input-box-field {
+    width: 100%; padding: 14px 16px; border: 2px solid #1d4e89; border-radius: 10px;
+    font-size: 24px; font-weight: 700; text-align: center; font-family: inherit;
+    margin-bottom: 8px;
+  }
+  .input-box-field:focus { outline: none; border-color: #c8102e; }
+  .input-box-guide { font-size: 12px; color: #aaa; text-align: center; margin-bottom: 16px; }
+  .input-box-btns { display: flex; gap: 8px; }
+  .ib-btn {
+    flex: 1; padding: 13px; border: none; border-radius: 10px;
+    font-size: 15px; font-weight: 700; font-family: inherit; cursor: pointer;
+  }
+  .ib-btn.cancel { background: #f0f0f0; color: #555; }
+  .ib-btn.prev { background: #eef2f8; color: #1d4e89; flex: 0.6; }
+  .ib-btn.confirm { background: #c8102e; color: #fff; }
+
   .clue-bar {
-    position: fixed; left: 0; right: 0; bottom: 0;
-    background: #fff; border-top: 2px solid #1a1a1a;
-    box-shadow: 0 -4px 12px rgba(0,0,0,0.1); z-index: 20;
-    padding: 12px 14px; max-width: 600px; margin: 0 auto;
+    position: fixed; left: 0; right: 0; bottom: 0; background: #fff;
+    border-top: 2px solid #1a1a1a; box-shadow: 0 -4px 12px rgba(0,0,0,0.1);
+    z-index: 20; padding: 14px; max-width: 600px; margin: 0 auto;
   }
-  .clue-meta { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #888; font-weight: 700; margin-bottom: 4px; }
-  .clue-dir-label { padding: 2px 8px; border-radius: 3px; background: #1d4e89; color: #fff; font-size: 10px; }
-  .clue-dir-label.v { background: #c8102e; }
-  .clue-text { font-size: 15px; color: #1a1a1a; line-height: 1.45; font-weight: 500; min-height: 22px; }
-  .clue-nav { display: flex; gap: 6px; margin-top: 10px; }
-  .nav-btn {
-    flex: 1; background: #f0f0f0; border: none; padding: 11px 6px;
-    border-radius: 6px; font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; color: #1a1a1a;
-  }
-  .nav-btn:active { background: #e0e0e0; }
-  .nav-btn.toggle { background: #1d4e89; color: #fff; }
+  .clue-status { font-size: 14px; color: #555; text-align: center; margin-bottom: 10px; line-height: 1.4; }
+  .clue-status b { color: #1a1a1a; }
   .submit-btn {
-    flex: 1.5; background: #c8102e; color: #fff; border: none; padding: 11px 6px;
-    border-radius: 6px; font-size: 13px; font-weight: 700; font-family: inherit; cursor: pointer;
+    width: 100%; background: #c8102e; color: #fff; border: none; padding: 15px;
+    border-radius: 10px; font-size: 16px; font-weight: 700; font-family: inherit; cursor: pointer;
   }
   .submit-btn:disabled { background: #ccc; cursor: not-allowed; }
+
   .done-overlay {
     display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5);
     z-index: 100; align-items: center; justify-content: center; padding: 20px;
@@ -95,10 +116,11 @@
   .done-title { font-size: 22px; font-weight: 800; margin-bottom: 10px; }
   .done-text { color: #555; font-size: 14px; line-height: 1.6; }
   .done-info { background: #f5f5f0; border-radius: 8px; padding: 12px; margin-top: 16px; font-size: 13px; color: #555; text-align: left; line-height: 1.5; }
+
   .toast {
-    position: fixed; bottom: 150px; left: 50%; transform: translateX(-50%);
+    position: fixed; bottom: 120px; left: 50%; transform: translateX(-50%);
     background: #1a1a1a; color: #fff; padding: 10px 16px; border-radius: 20px;
-    font-size: 13px; z-index: 50; opacity: 0; transition: opacity 0.3s; pointer-events: none; white-space: nowrap;
+    font-size: 13px; z-index: 70; opacity: 0; transition: opacity 0.3s; pointer-events: none; white-space: nowrap;
   }
   .toast.show { opacity: 1; }
   .toast.error { background: #c8102e; }
@@ -116,20 +138,27 @@
 
 <div id="app"><div class="loading">불러오는 중...</div></div>
 
-<input type="text" class="hidden-input" id="hidden-input" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+<!-- 입력 팝업 -->
+<div class="input-modal" id="input-modal">
+  <div class="input-box">
+    <div class="input-box-head">
+      <span class="input-box-dir" id="ib-dir">가로</span>
+      <span class="input-box-pos" id="ib-pos"></span>
+    </div>
+    <div class="input-box-hint" id="ib-hint"></div>
+    <input type="text" class="input-box-field" id="ib-field" maxlength="1" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+    <div class="input-box-guide">한 글자 입력 후 '넣기'를 누르세요</div>
+    <div class="input-box-btns">
+      <button class="ib-btn prev" id="ib-prev">◀</button>
+      <button class="ib-btn cancel" id="ib-cancel">닫기</button>
+      <button class="ib-btn confirm" id="ib-confirm">넣기 ▶</button>
+    </div>
+  </div>
+</div>
 
 <div class="clue-bar" id="clue-bar" style="display:none;">
-  <div class="clue-meta">
-    <span class="clue-dir-label" id="clue-dir-label">가로</span>
-    <span id="clue-num-text">셀을 탭하여 시작하세요</span>
-  </div>
-  <div class="clue-text" id="clue-text">먼저 이름과 부서를 입력하세요</div>
-  <div class="clue-nav">
-    <button class="nav-btn" id="btn-prev">◀ 이전</button>
-    <button class="nav-btn toggle" id="btn-toggle">↔ 방향</button>
-    <button class="nav-btn" id="btn-next">다음 ▶</button>
-    <button class="submit-btn" id="btn-submit" disabled>제출</button>
-  </div>
+  <div class="clue-status" id="clue-status">빈 칸을 탭하여 정답을 입력하세요</div>
+  <button class="submit-btn" id="btn-submit" disabled>제출</button>
 </div>
 
 <div class="done-overlay" id="done-overlay">
@@ -160,11 +189,8 @@ class CrosswordApp {
     this.cellByPos = new Map();
     this.letterByPos = new Map();
     this.wordsByCell = new Map();
-    this.currentR = -1;
-    this.currentC = -1;
-    this.currentDir = 'H';
+    this.curR = -1; this.curC = -1; this.curDir = 'H';
     this.userSubmitted = false;
-    this.hiddenInput = document.getElementById('hidden-input');
     this.indexWords();
     this.render();
     this.bindEvents();
@@ -174,39 +200,24 @@ class CrosswordApp {
 
   buildGrid() {
     const g = [];
-    for (let r = 0; r < this.size; r++) { g.push([]); for (let c = 0; c < this.size; c++) g[r].push({ active: false, answer: '', input: '' }); }
-    for (const w of this.words) {
-      for (let i = 0; i < w.word.length; i++) {
-        const r = w.dir === 'V' ? w.r + i : w.r;
-        const c = w.dir === 'H' ? w.c + i : w.c;
-        if (r < this.size && c < this.size) { g[r][c].active = true; g[r][c].answer = w.word[i]; }
-      }
+    for (let r = 0; r < this.size; r++) { g.push([]); for (let c = 0; c < this.size; c++) g[r].push({ active:false, answer:'', input:'' }); }
+    for (const w of this.words) for (let i = 0; i < w.word.length; i++) {
+      const r = w.dir==='V'?w.r+i:w.r, c = w.dir==='H'?w.c+i:w.c;
+      if (r<this.size && c<this.size) { g[r][c].active=true; g[r][c].answer=w.word[i]; }
     }
     return g;
   }
-
   computeNumbers() {
     const starts = new Set();
     for (const w of this.words) starts.add(`${w.r},${w.c}`);
-    const sorted = [...starts].sort((a, b) => {
-      const [ra, ca] = a.split(',').map(Number);
-      const [rb, cb] = b.split(',').map(Number);
-      return ra !== rb ? ra - rb : ca - cb;
-    });
-    const map = {};
-    sorted.forEach((k, i) => { map[k] = i + 1; });
-    return map;
+    const sorted = [...starts].sort((a,b)=>{const[ra,ca]=a.split(',').map(Number);const[rb,cb]=b.split(',').map(Number);return ra!==rb?ra-rb:ca-cb;});
+    const map = {}; sorted.forEach((k,i)=>map[k]=i+1); return map;
   }
-
   indexWords() {
-    for (const w of this.words) {
-      for (let i = 0; i < w.word.length; i++) {
-        const r = w.dir === 'V' ? w.r + i : w.r;
-        const c = w.dir === 'H' ? w.c + i : w.c;
-        const key = `${r},${c}`;
-        if (!this.wordsByCell.has(key)) this.wordsByCell.set(key, []);
-        this.wordsByCell.get(key).push(w);
-      }
+    for (const w of this.words) for (let i=0;i<w.word.length;i++){
+      const r=w.dir==='V'?w.r+i:w.r, c=w.dir==='H'?w.c+i:w.c, key=`${r},${c}`;
+      if(!this.wordsByCell.has(key)) this.wordsByCell.set(key,[]);
+      this.wordsByCell.get(key).push(w);
     }
   }
 
@@ -221,37 +232,34 @@ class CrosswordApp {
     `;
     app.appendChild(userCard);
 
+    const tip = document.createElement('div');
+    tip.className = 'hint-tip';
+    tip.innerHTML = '💡 흰 칸을 <b>탭</b>하면 힌트와 입력창이 떠요. 한 글자씩 넣으면 자동으로 다음 칸으로 넘어갑니다.';
+    app.appendChild(tip);
+
     const gridWrap = document.createElement('div');
     gridWrap.className = 'grid-wrap';
     const gridEl = document.createElement('div');
-    gridEl.className = 'grid';
-    gridEl.id = 'grid';
+    gridEl.className = 'grid'; gridEl.id = 'grid';
     gridEl.style.gridTemplateColumns = `repeat(${this.size}, 1fr)`;
-
-    for (let r = 0; r < this.size; r++) {
-      for (let c = 0; c < this.size; c++) {
-        const cell = document.createElement('div');
-        cell.className = 'cell';
-        cell.dataset.r = r;
-        cell.dataset.c = c;
-        if (this.grid[r][c].active) {
-          cell.classList.add('active');
-          const numKey = `${r},${c}`;
-          if (this.numbers[numKey]) {
-            const num = document.createElement('div');
-            num.className = 'cell-num';
-            num.textContent = this.numbers[numKey];
-            cell.appendChild(num);
-          }
-          const letter = document.createElement('div');
-          letter.className = 'cell-letter';
-          letter.textContent = '';
-          cell.appendChild(letter);
-          this.letterByPos.set(numKey, letter);
+    for (let r=0;r<this.size;r++) for (let c=0;c<this.size;c++){
+      const cell = document.createElement('div');
+      cell.className = 'cell'; cell.dataset.r = r; cell.dataset.c = c;
+      if (this.grid[r][c].active) {
+        cell.classList.add('active');
+        const numKey = `${r},${c}`;
+        if (this.numbers[numKey]) {
+          const num = document.createElement('div');
+          num.className = 'cell-num'; num.textContent = this.numbers[numKey];
+          cell.appendChild(num);
         }
-        this.cellByPos.set(`${r},${c}`, cell);
-        gridEl.appendChild(cell);
+        const letter = document.createElement('div');
+        letter.className = 'cell-letter';
+        cell.appendChild(letter);
+        this.letterByPos.set(numKey, letter);
       }
+      this.cellByPos.set(`${r},${c}`, cell);
+      gridEl.appendChild(cell);
     }
     gridWrap.appendChild(gridEl);
     app.appendChild(gridWrap);
@@ -266,293 +274,216 @@ class CrosswordApp {
     document.getElementById('grid').addEventListener('click', (e) => {
       const cell = e.target.closest('.cell.active');
       if (!cell) return;
-      const r = +cell.dataset.r;
-      const c = +cell.dataset.c;
-      if (r === this.currentR && c === this.currentC) this.toggleDirection();
-      else this.setCurrent(r, c);
-      this.focusHiddenInput();
+      const r = +cell.dataset.r, c = +cell.dataset.c;
+      // 방향 결정: 두 방향 다 있으면, 현재 칸이면 토글
+      const words = this.wordsByCell.get(`${r},${c}`) || [];
+      if (r === this.curR && c === this.curC) {
+        const other = this.curDir === 'H' ? 'V' : 'H';
+        if (words.some(w=>w.dir===other)) this.curDir = other;
+      } else {
+        if (!words.some(w=>w.dir===this.curDir)) this.curDir = words[0].dir;
+      }
+      this.curR = r; this.curC = c;
+      this.openInput();
     });
 
-    const hi = this.hiddenInput;
-    let composing = false;
-    hi.addEventListener('compositionstart', () => { composing = true; });
-    hi.addEventListener('compositionend', (e) => {
-      composing = false;
-      this.commitChar(e.data);
-      hi.value = '';
-    });
-    hi.addEventListener('input', () => {
-      if (composing) return;
-      const v = hi.value;
-      if (v) { this.commitChar(v.charAt(v.length - 1)); hi.value = ''; }
-    });
-    hi.addEventListener('keydown', (e) => {
-      if (e.key === 'Backspace') { if (!composing) { e.preventDefault(); this.handleBackspace(); } }
-      else if (e.key === 'Enter') { e.preventDefault(); this.moveByWord(1); }
-      else if (e.key === 'ArrowRight') { e.preventDefault(); this.moveByDelta(0, 1); }
-      else if (e.key === 'ArrowLeft')  { e.preventDefault(); this.moveByDelta(0, -1); }
-      else if (e.key === 'ArrowDown')  { e.preventDefault(); this.moveByDelta(1, 0); }
-      else if (e.key === 'ArrowUp')    { e.preventDefault(); this.moveByDelta(-1, 0); }
-    });
-
-    document.getElementById('user-name').addEventListener('input', () => { this.saveDraft(); this.updateSubmitState(); });
-    document.getElementById('user-dept').addEventListener('input', () => { this.saveDraft(); this.updateSubmitState(); });
-    document.getElementById('btn-prev').addEventListener('click', () => { this.moveByWord(-1); this.focusHiddenInput(); });
-    document.getElementById('btn-next').addEventListener('click', () => { this.moveByWord(1); this.focusHiddenInput(); });
-    document.getElementById('btn-toggle').addEventListener('click', () => { this.toggleDirection(); this.focusHiddenInput(); });
+    document.getElementById('user-name').addEventListener('input', () => { this.saveDraft(); this.updateProgress(); });
+    document.getElementById('user-dept').addEventListener('input', () => { this.saveDraft(); this.updateProgress(); });
     document.getElementById('btn-submit').addEventListener('click', () => this.submit());
+
+    // 팝업 버튼
+    document.getElementById('ib-confirm').addEventListener('click', () => this.confirmInput(true));
+    document.getElementById('ib-cancel').addEventListener('click', () => this.closeInput());
+    document.getElementById('ib-prev').addEventListener('click', () => this.gotoPrevCell());
+
+    const field = document.getElementById('ib-field');
+    // 엔터 = 넣기
+    field.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); this.confirmInput(true); }
+    });
+    // 모달 바깥 탭하면 닫기
+    document.getElementById('input-modal').addEventListener('click', (e) => {
+      if (e.target.id === 'input-modal') this.closeInput();
+    });
   }
 
-  focusHiddenInput() {
-    if (this.currentR < 0) return;
-    this.hiddenInput.value = '';
-    this.hiddenInput.focus({ preventScroll: true });
+  getCurrentWord() {
+    const words = this.wordsByCell.get(`${this.curR},${this.curC}`) || [];
+    return words.find(w => w.dir === this.curDir) || words[0];
+  }
+  cellIndexInWord(word, r, c) {
+    for (let i=0;i<word.word.length;i++){
+      const rr=word.dir==='V'?word.r+i:word.r, cc=word.dir==='H'?word.c+i:word.c;
+      if(rr===r&&cc===c) return i;
+    }
+    return -1;
   }
 
-  commitChar(ch) {
-    if (!ch || this.currentR < 0) return;
-    ch = ch.charAt(ch.length - 1);
-    if (/[a-zA-Z]/.test(ch)) ch = ch.toUpperCase();
-    this.grid[this.currentR][this.currentC].input = ch;
-    this.renderCell(this.currentR, this.currentC);
+  openInput() {
+    const word = this.getCurrentWord();
+    if (!word) return;
+    const isV = word.dir === 'V';
+    document.getElementById('ib-dir').textContent = isV ? '세로' : '가로';
+    document.getElementById('ib-dir').className = 'input-box-dir' + (isV ? ' v' : '');
+    const n = this.numbers[`${word.r},${word.c}`];
+    const idx = this.cellIndexInWord(word, this.curR, this.curC);
+    document.getElementById('ib-pos').textContent = `${n}번 (${word.word.length}글자) · ${idx+1}번째 칸`;
+    document.getElementById('ib-hint').textContent = word.hint || '(힌트 없음)';
+    const field = document.getElementById('ib-field');
+    field.value = this.grid[this.curR][this.curC].input || '';
+    document.getElementById('input-modal').classList.add('show');
+    // 약간의 지연 후 포커스 (모바일 키보드)
+    setTimeout(() => { field.focus(); field.select(); }, 100);
+  }
+
+  closeInput() {
+    document.getElementById('input-modal').classList.remove('show');
+    document.getElementById('ib-field').blur();
+  }
+
+  confirmInput(advance) {
+    const field = document.getElementById('ib-field');
+    let v = field.value.trim();
+    if (v.length > 1) v = v.charAt(v.length - 1);
+    if (/[a-zA-Z]/.test(v)) v = v.toUpperCase();
+    this.grid[this.curR][this.curC].input = v;
+    this.renderCell(this.curR, this.curC);
     this.updateProgress();
     this.saveDraft();
-    this.advanceCursor();
+    if (advance) {
+      const moved = this.gotoNextCell();
+      if (moved) {
+        this.openInput(); // 다음 칸 팝업 갱신
+      } else {
+        this.closeInput();
+        this.showToast('이 단어를 다 채웠어요!', 'success');
+      }
+    }
   }
 
-  handleBackspace() {
-    if (this.currentR < 0) return;
-    const cur = this.grid[this.currentR][this.currentC];
-    if (cur.input) { cur.input = ''; this.renderCell(this.currentR, this.currentC); }
-    else { this.retreatCursor(true); }
-    this.updateProgress();
-    this.saveDraft();
+  gotoNextCell() {
+    const word = this.getCurrentWord();
+    if (!word) return false;
+    const idx = this.cellIndexInWord(word, this.curR, this.curC);
+    if (idx >= 0 && idx + 1 < word.word.length) {
+      this.curR = word.dir==='V'?word.r+idx+1:word.r;
+      this.curC = word.dir==='H'?word.c+idx+1:word.c;
+      this.highlightCurrent();
+      return true;
+    }
+    return false;
+  }
+
+  gotoPrevCell() {
+    // 입력값 저장하고 이전 칸으로
+    this.confirmInput(false);
+    const word = this.getCurrentWord();
+    if (!word) return;
+    const idx = this.cellIndexInWord(word, this.curR, this.curC);
+    if (idx > 0) {
+      this.curR = word.dir==='V'?word.r+idx-1:word.r;
+      this.curC = word.dir==='H'?word.c+idx-1:word.c;
+      this.highlightCurrent();
+      this.openInput();
+    } else {
+      this.showToast('첫 칸입니다');
+    }
+  }
+
+  highlightCurrent() {
+    // 칸 색은 입력 여부로만 표시하므로 별도 처리 불필요
   }
 
   renderCell(r, c) {
     const letter = this.letterByPos.get(`${r},${c}`);
     if (letter) letter.textContent = this.grid[r][c].input || '';
-  }
-
-  setCurrent(r, c) {
-    this.currentR = r;
-    this.currentC = c;
-    const words = this.wordsByCell.get(`${r},${c}`) || [];
-    const dirWords = words.filter(w => w.dir === this.currentDir);
-    if (dirWords.length === 0 && words.length > 0) this.currentDir = words[0].dir;
-    this.updateHighlight();
-    this.updateClue();
-  }
-
-  updateHighlight() {
-    this.cellByPos.forEach(cell => cell.classList.remove('highlight', 'current-cell'));
-    if (this.currentR < 0) return;
-    const word = this.getCurrentWord();
-    if (word) {
-      for (let i = 0; i < word.word.length; i++) {
-        const r = word.dir === 'V' ? word.r + i : word.r;
-        const c = word.dir === 'H' ? word.c + i : word.c;
-        const cell = this.cellByPos.get(`${r},${c}`);
-        if (cell) cell.classList.add('highlight');
-      }
+    const cell = this.cellByPos.get(`${r},${c}`);
+    if (cell) {
+      if (this.grid[r][c].input) cell.classList.add('filled');
+      else cell.classList.remove('filled');
     }
-    const curCell = this.cellByPos.get(`${this.currentR},${this.currentC}`);
-    if (curCell) curCell.classList.add('current-cell');
-  }
-
-  getCurrentWord() {
-    if (this.currentR < 0) return null;
-    const words = this.wordsByCell.get(`${this.currentR},${this.currentC}`) || [];
-    return words.find(w => w.dir === this.currentDir) || words[0];
-  }
-
-  updateClue() {
-    const word = this.getCurrentWord();
-    const dirLabel = document.getElementById('clue-dir-label');
-    const numText = document.getElementById('clue-num-text');
-    const clueText = document.getElementById('clue-text');
-    if (!word) {
-      dirLabel.textContent = '-'; dirLabel.className = 'clue-dir-label';
-      numText.textContent = '셀을 탭하여 시작하세요'; clueText.textContent = '';
-      return;
-    }
-    const isV = word.dir === 'V';
-    dirLabel.textContent = isV ? '세로' : '가로';
-    dirLabel.className = 'clue-dir-label' + (isV ? ' v' : '');
-    const n = this.numbers[`${word.r},${word.c}`];
-    numText.textContent = `${n}번 (${word.word.length}글자)`;
-    clueText.textContent = word.hint || '(힌트 없음)';
-  }
-
-  toggleDirection() {
-    const words = this.wordsByCell.get(`${this.currentR},${this.currentC}`) || [];
-    const otherDir = this.currentDir === 'H' ? 'V' : 'H';
-    if (words.some(w => w.dir === otherDir)) {
-      this.currentDir = otherDir;
-      this.updateHighlight();
-      this.updateClue();
-    } else {
-      this.showToast('이 칸은 ' + (otherDir === 'H' ? '가로' : '세로') + ' 단어가 없습니다');
-    }
-  }
-
-  cellIndexInWord(word, r, c) {
-    for (let i = 0; i < word.word.length; i++) {
-      const rr = word.dir === 'V' ? word.r + i : word.r;
-      const cc = word.dir === 'H' ? word.c + i : word.c;
-      if (rr === r && cc === c) return i;
-    }
-    return -1;
-  }
-
-  advanceCursor() {
-    const word = this.getCurrentWord();
-    if (!word) return;
-    const idx = this.cellIndexInWord(word, this.currentR, this.currentC);
-    if (idx >= 0 && idx + 1 < word.word.length) {
-      const nr = word.dir === 'V' ? word.r + idx + 1 : word.r;
-      const nc = word.dir === 'H' ? word.c + idx + 1 : word.c;
-      this.setCurrent(nr, nc);
-    }
-  }
-
-  retreatCursor(doDelete) {
-    const word = this.getCurrentWord();
-    if (!word) return;
-    const idx = this.cellIndexInWord(word, this.currentR, this.currentC);
-    if (idx > 0) {
-      const nr = word.dir === 'V' ? word.r + idx - 1 : word.r;
-      const nc = word.dir === 'H' ? word.c + idx - 1 : word.c;
-      this.setCurrent(nr, nc);
-      if (doDelete) { this.grid[nr][nc].input = ''; this.renderCell(nr, nc); }
-    }
-  }
-
-  moveByDelta(dr, dc) {
-    let r = this.currentR + dr, c = this.currentC + dc;
-    while (r >= 0 && r < this.size && c >= 0 && c < this.size) {
-      if (this.grid[r][c].active) { this.setCurrent(r, c); return; }
-      r += dr; c += dc;
-    }
-  }
-
-  moveByWord(delta) {
-    const word = this.getCurrentWord();
-    const sorted = [...this.words].sort((a, b) => {
-      const na = this.numbers[`${a.r},${a.c}`];
-      const nb = this.numbers[`${b.r},${b.c}`];
-      if (na !== nb) return na - nb;
-      return a.dir === 'H' ? -1 : 1;
-    });
-    let idx = sorted.findIndex(w => w === word);
-    if (idx < 0) idx = 0;
-    const next = (idx + delta + sorted.length) % sorted.length;
-    const nextWord = sorted[next];
-    this.currentDir = nextWord.dir;
-    this.setCurrent(nextWord.r, nextWord.c);
   }
 
   updateProgress() {
-    let filled = 0, total = 0;
-    for (let r = 0; r < this.size; r++) for (let c = 0; c < this.size; c++) {
-      if (this.grid[r][c].active) { total++; if (this.grid[r][c].input) filled++; }
+    let filled=0, total=0;
+    for (let r=0;r<this.size;r++) for (let c=0;c<this.size;c++){
+      if (this.grid[r][c].active){ total++; if(this.grid[r][c].input) filled++; }
     }
     document.getElementById('prog-cur').textContent = filled;
     const pill = document.getElementById('prog-pill');
-    if (filled === total && total > 0) pill.classList.add('full'); else pill.classList.remove('full');
-    this.updateSubmitState();
-  }
+    if (filled===total && total>0) pill.classList.add('full'); else pill.classList.remove('full');
 
-  updateSubmitState() {
-    let filled = 0, total = 0;
-    for (let r = 0; r < this.size; r++) for (let c = 0; c < this.size; c++) {
-      if (this.grid[r][c].active) { total++; if (this.grid[r][c].input) filled++; }
-    }
     const name = document.getElementById('user-name')?.value.trim() || '';
     const dept = document.getElementById('user-dept')?.value.trim() || '';
+    const status = document.getElementById('clue-status');
     const btn = document.getElementById('btn-submit');
-    if (this.userSubmitted) { btn.textContent = '제출됨'; btn.disabled = true; return; }
-    if (filled === total && name && dept) { btn.disabled = false; btn.textContent = '제출'; }
-    else { btn.disabled = true; if (!name || !dept) btn.textContent = '이름·부서 입력'; else btn.textContent = `남은 ${total - filled}칸`; }
+    if (this.userSubmitted) { btn.textContent='제출됨'; btn.disabled=true; return; }
+    if (filled === total && name && dept) {
+      btn.disabled = false; btn.textContent = '제출하기';
+      status.innerHTML = '모든 칸을 채웠어요! <b>제출</b>을 눌러주세요';
+    } else {
+      btn.disabled = true;
+      const remain = total - filled;
+      if (!name || !dept) { btn.textContent='이름·부서 입력 필요'; status.innerHTML = '먼저 <b>이름과 부서</b>를 입력하세요'; }
+      else { btn.textContent=`아직 ${remain}칸 남음`; status.innerHTML = `남은 칸: <b>${remain}개</b> · 흰 칸을 탭하여 입력`; }
+    }
   }
 
   draftKey() { return 'crossword_draft_' + (this.config.draftId || 'default'); }
   saveDraft() {
     try {
-      const draft = { inputs: {}, name: document.getElementById('user-name')?.value || '', dept: document.getElementById('user-dept')?.value || '' };
-      for (let r = 0; r < this.size; r++) for (let c = 0; c < this.size; c++) {
+      const draft = { inputs:{}, name:document.getElementById('user-name')?.value||'', dept:document.getElementById('user-dept')?.value||'' };
+      for (let r=0;r<this.size;r++) for (let c=0;c<this.size;c++)
         if (this.grid[r][c].active && this.grid[r][c].input) draft.inputs[`${r},${c}`] = this.grid[r][c].input;
-      }
       localStorage.setItem(this.draftKey(), JSON.stringify(draft));
-    } catch (e) {}
+    } catch(e){}
   }
   loadDraft() {
     try {
       const raw = localStorage.getItem(this.draftKey());
       if (!raw) return;
       const draft = JSON.parse(raw);
-      for (const [key, v] of Object.entries(draft.inputs || {})) {
-        const [r, c] = key.split(',').map(Number);
-        if (this.grid[r] && this.grid[r][c] && this.grid[r][c].active) { this.grid[r][c].input = v; this.renderCell(r, c); }
+      for (const [key,v] of Object.entries(draft.inputs||{})){
+        const [r,c]=key.split(',').map(Number);
+        if (this.grid[r]&&this.grid[r][c]&&this.grid[r][c].active){ this.grid[r][c].input=v; this.renderCell(r,c); }
       }
       if (draft.name) document.getElementById('user-name').value = draft.name;
       if (draft.dept) document.getElementById('user-dept').value = draft.dept;
-    } catch (e) {}
+    } catch(e){}
   }
 
   async submit() {
     if (this.userSubmitted) return;
     const name = document.getElementById('user-name').value.trim();
     const dept = document.getElementById('user-dept').value.trim();
-    if (!name || !dept) { this.showToast('이름·부서를 입력해주세요', 'error'); return; }
-    const answers = {};
-    let score = 0, total = 0;
-    for (const w of this.words) {
-      let userAnswer = '';
-      for (let i = 0; i < w.word.length; i++) {
-        const r = w.dir === 'V' ? w.r + i : w.r;
-        const c = w.dir === 'H' ? w.c + i : w.c;
-        userAnswer += this.grid[r][c].input || '';
-      }
-      const num = this.numbers[`${w.r},${w.c}`];
-      answers[`${num}${w.dir}`] = userAnswer;
-      total++;
-      if (userAnswer === w.word) score++;
+    if (!name || !dept) { this.showToast('이름·부서를 입력해주세요','error'); return; }
+    const answers = {}; let score=0, total=0;
+    for (const w of this.words){
+      let ua='';
+      for (let i=0;i<w.word.length;i++){const r=w.dir==='V'?w.r+i:w.r,c=w.dir==='H'?w.c+i:w.c;ua+=this.grid[r][c].input||'';}
+      answers[`${this.numbers[`${w.r},${w.c}`]}${w.dir}`]=ua;
+      total++; if(ua===w.word) score++;
     }
-    const payload = { timestamp: new Date().toISOString(), name, dept, answers, score, total, ua: navigator.userAgent.slice(0, 100) };
+    const payload = { timestamp:new Date().toISOString(), name, dept, answers, score, total, ua:navigator.userAgent.slice(0,100) };
     const btn = document.getElementById('btn-submit');
-    btn.disabled = true; btn.textContent = '제출 중...';
+    btn.disabled=true; btn.textContent='제출 중...';
     if (!this.submitUrl) {
-      this.showToast('제출 URL 미설정 — JSON 다운로드', 'error');
-      this.downloadJSON(payload);
-      btn.disabled = false; btn.textContent = '제출';
-      return;
+      this.showToast('제출 URL 미설정','error');
+      btn.disabled=false; btn.textContent='제출하기'; return;
     }
     try {
-      await fetch(this.submitUrl, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) });
+      await fetch(this.submitUrl, { method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify(payload) });
       this.userSubmitted = true;
       localStorage.removeItem(this.draftKey());
       document.getElementById('done-info').innerHTML = `<b>${name}</b>님 (${dept})<br>총 ${total}문항 중 <b>${score}문항</b> 정답<br>제출 시각: ${new Date().toLocaleString('ko-KR')}`;
       document.getElementById('done-overlay').classList.add('show');
-    } catch (e) {
-      this.showToast('제출 실패: ' + e.message, 'error');
-      btn.disabled = false; btn.textContent = '다시 제출';
-    }
+    } catch(e){ this.showToast('제출 실패: '+e.message,'error'); btn.disabled=false; btn.textContent='다시 제출'; }
   }
 
-  downloadJSON(payload) {
-    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = `submission_${Date.now()}.json`;
-    a.click(); URL.revokeObjectURL(url);
-  }
-
-  showToast(msg, type = '') {
+  showToast(msg, type='') {
     const t = document.getElementById('toast');
-    t.textContent = msg;
-    t.className = 'toast show ' + type;
-    setTimeout(() => { t.className = 'toast ' + type; }, 2500);
+    t.textContent = msg; t.className = 'toast show '+type;
+    setTimeout(()=>{ t.className='toast '+type; }, 2200);
   }
 }
 
@@ -562,7 +493,7 @@ window.addEventListener('DOMContentLoaded', () => {
     return;
   }
   try { new CrosswordApp(PUZZLE_DATA); }
-  catch (e) { console.error(e); document.getElementById('app').innerHTML = '<div class="error-screen">⚠️ 초기화 실패: ' + e.message + '</div>'; }
+  catch(e){ console.error(e); document.getElementById('app').innerHTML = '<div class="error-screen">⚠️ 초기화 실패: '+e.message+'</div>'; }
 });
 </script>
 </body>
