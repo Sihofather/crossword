@@ -58,6 +58,7 @@
       radial-gradient(circle at 50% 50%, transparent 0 14px, rgba(255,215,106,.25) 15px 16px, transparent 17px),
       repeating-linear-gradient(45deg, #3a2f78 0 6px, #332a6b 6px 12px);
     border: 2px solid #5b4fb0; }
+  .card:disabled { opacity: 1; cursor: default; }
   .card.face { background: var(--hanji); color: var(--ink); border: 2px solid #d9cba8; }
   .card.face.special { border-color: var(--moon); box-shadow: inset 0 0 0 2px rgba(240,122,62,.35); }
   .card .num { font-family: var(--f-display); font-size: calc(var(--w) * .46); line-height: 1; }
@@ -213,7 +214,7 @@ const DOK = (() => {
         mine(); if (!s.pending) throw Error('먼저 카드를 가져오세요');
         const i = a.idx; if (!(i >= 0 && i < hand.length)) throw Error('바꿀 카드를 고르세요');
         const old = hand[i]; hand[i] = s.pending.card; s.discard.push(old);
-        log(s, pid, `${i + 1}번 카드를 바꾸고 ${cardName(s.cards[old])}을(를) 버렸어요`);
+        log(s, pid, `${i + 1}번 카드를 바꾸고 ${cardName(s.cards[old])}${eul(s.cards[old])} 버렸어요`);
         return endTurn(s);
       }
       case 'discardPending': {
@@ -224,7 +225,7 @@ const DOK = (() => {
           if (kind.ability !== 'peekSelf' && s.players.length < 2) throw Error('상대가 없어요');
           s.ability = { type: kind.ability }; log(s, pid, `${kind.name} 능력을 써요`); return s;
         }
-        log(s, pid, `${cardName(s.cards[c])}을(를) 버렸어요`); return endTurn(s);
+        log(s, pid, `${cardName(s.cards[c])}${eul(s.cards[c])} 버렸어요`); return endTurn(s);
       }
       case 'peekSelf': {
         mine(); if (!s.ability || s.ability.type !== 'peekSelf') throw Error('등불 능력이 없어요');
@@ -271,6 +272,8 @@ const DOK = (() => {
     }
   }
   const cardName = c => c.k === 'n' ? `${c.v}` : `${KINDS[c.k].name}(${c.v})`;
+  // 숫자 읽기 끝소리로 을/를 고르기 (0영 1일 3삼 6육 7칠 8팔 → 을)
+  const eul = c => [0, 1, 3, 6, 7, 8].includes(Math.abs(c.v) % 10) ? '을' : '를';
   return { KINDS, HAND, GOAL, CALL_PENALTY, makeCards, newRound, act, handSum, cardName, cur, idxOf, shuffle };
 })();
 </script>
@@ -280,7 +283,17 @@ const DOK = (() => {
    화면 (React + htm) — 공유 저장소(db)로 여러 폰이 같은 방을 봄
    ===================================================================== */
 const { useState, useEffect, useRef, useMemo, useCallback } = React;
-const html = htm.bind(React.createElement);
+// htm 템플릿의 style="..." 문자열·class 속성을 React 형식으로 변환
+const toStyle = str => Object.fromEntries(str.split(';').map(d => d.trim()).filter(Boolean).map(d => {
+  const i = d.indexOf(':'); const k = d.slice(0, i).trim(); return [k.startsWith('--') ? k : k.replace(/-([a-z])/g, (_, c) => c.toUpperCase()), d.slice(i + 1).trim()]; }));
+const h = (type, props, ...kids) => {
+  if (props) {
+    if (typeof props.style === 'string') props = { ...props, style: toStyle(props.style) };
+    if ('class' in props) { const { class: c, ...rest } = props; props = { ...rest, className: c }; }
+  }
+  return React.createElement(type, props, ...kids);
+};
+const html = htm.bind(h);
 const GAMES = [{ id: 'dokkaebi', name: '도깨비 셈', who: '2~6명 · 15분', blurb: '뒤집힌 카드를 기억하고 바꿔치기해서 합계를 가장 낮게 만드는 눈치 카드게임' }];
 const ls = { get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } },
              set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} } };
@@ -425,8 +438,13 @@ function Room({ db, me, nick, code, leave, say }) {
     if (!nick.trim()) return say('처음 화면에서 이름을 먼저 정해 주세요');
     setBusy(true);
     try {
-      const l = await ref.acquire({ holder: me.id, ttlMs: 5000 });
-      if (!l.acquired) throw Error('다른 사람이 들어오는 중이에요. 잠시 후 다시');
+      // 동시에 들어오는 가족끼리 서로 덮어쓰지 않도록 1초짜리 잠금을 잡고, 바쁘면 자동으로 다시 시도
+      let l = { acquired: false };
+      for (let t = 0; t < 8 && !l.acquired; t++) {
+        l = await ref.acquire({ holder: me.id, ttlMs: 1000 });
+        if (!l.acquired) await new Promise(r => setTimeout(r, 300 + Math.random() * 400));
+      }
+      if (!l.acquired) throw Error('다른 사람이 들어오는 중이에요. 다시 눌러 주세요');
       const s = (await ref.get()).data();
       if (s.status !== 'lobby') throw Error('이미 시작한 방이에요');
       if (s.players.length >= 6) throw Error('방이 가득 찼어요 (6명)');
