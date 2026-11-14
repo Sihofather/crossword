@@ -1,5 +1,5 @@
 'use strict';
-/* 게임: 원카드 (한국 전래 카드놀이 규칙) */
+/* 게임: 도깨비 원카드 (한국 전래 카드놀이 규칙) */
 const ONE = (() => {
   const RANKS = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
   const BANKRUPT = 20;
@@ -93,7 +93,7 @@ const ONE = (() => {
 (() => {
 function Rules({ onClose }) {
   return html`<${Overlay} onClose=${onClose}><div class="rules">
-    <h2>원카드 규칙</h2>
+    <h2>도깨비 원카드 규칙</h2>
     <p><b>목표:</b> 손에 든 카드를 가장 먼저 다 내면 이겨요. 카드가 ${ONE.BANKRUPT}장 이상이 되면 파산해서 탈락해요.</p>
     <h3>기본</h3>
     <ul><li>버림더미 맨 위 카드와 <b>같은 무늬</b>나 <b>같은 숫자</b>를 1장 내요.</li>
@@ -149,6 +149,6 @@ const ORDER = 'SHDC', RORDER = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10
 function sortCards(a, b) { if (a.startsWith('JK') || b.startsWith('JK')) return a.startsWith('JK') - b.startsWith('JK');
   return ORDER.indexOf(a[0]) - ORDER.indexOf(b[0]) || RORDER.indexOf(a.slice(1)) - RORDER.indexOf(b.slice(1)); }
 function Icon() { return html`<div class="row" style="gap:2px"><${PCard} id="HA" size="sm" /><${PCard} id="S7" size="sm" /><${PCard} id="JK1" size="sm" /></div>`; }
-GAMES.push({ id: 'onecard', name: '원카드', who: '2~6명 · 10분', min: 2, max: 6, blurb: '같은 무늬나 숫자를 내며 공격하고 막는, 우리가 아는 그 원카드',
+GAMES.push({ id: 'onecard', name: '도깨비 원카드', who: '2~6명 · 10분', min: 2, max: 6, blurb: '같은 무늬나 숫자를 내며 공격하고 막는, 우리가 아는 그 원카드',
   start: ONE.start, act: ONE.act, Board, Rules, Icon });
 })();
