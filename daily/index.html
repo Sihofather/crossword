@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>한판 가로세로</title>
+<meta name="description" content="매일 새로 열리는 한글 미니 가로세로 퍼즐. 하루 한 판, 기록을 공유하세요.">
+<meta property="og:title" content="한판 가로세로 — 오늘의 퍼즐">
+<meta property="og:description" content="매일 하나씩 열리는 한글 미니 가로세로. 몇 분 만에 풀 수 있나요?">
+<meta name="theme-color" content="#14213d">
+<link rel="manifest" href="manifest.webmanifest">
+<!--
+  ▼ 수익화 설정 (MONETIZATION.md 참고)
+  1) Google AdSense 승인 후 아래 주석을 풀고 ca-pub-XXXX 를 본인 ID로 교체
+  2) H5 Games Ads(보상형 광고)를 쓰려면 data-ad-frequency-hint 와 adBreak 설정 유지
+-->
+<!--
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX"
+  data-ad-frequency-hint="30s" crossorigin="anonymous"></script>
+<script>
+  window.adsbygoogle = window.adsbygoogle || [];
+  window.adBreak = window.adConfig = function(o){ adsbygoogle.push(o); };
+  adConfig({ preloadAdBreaks: 'on' });
+</script>
+-->
+<style>
+  :root {
+    --ink: #14213d; --paper: #faf7f0; --card: #ffffff; --line: #e6e0d4;
+    --accent: #e85d3f; --accent-2: #2a6f97; --good: #2d936c; --warn: #f2a541;
+    --muted: #7a7466; --cell: #ffffff; --block: #14213d; --sel: #ffe7a3; --word: #dceefb;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { background: var(--paper); color: var(--ink); min-height: 100vh;
+    font-family: 'Pretendard', 'Apple SD Gothic Neo', 'Malgun Gothic', system-ui, sans-serif; }
+  body { max-width: 520px; margin: 0 auto; padding: 0 0 96px; }
+  button { font-family: inherit; cursor: pointer; }
+
+  header { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px 8px; }
+  .logo { font-size: 20px; font-weight: 900; letter-spacing: -0.5px; }
+  .logo span { color: var(--accent); }
+  .icon-btn { background: none; border: 1px solid var(--line); border-radius: 10px; padding: 6px 10px;
+    font-size: 14px; color: var(--ink); background: var(--card); }
+
+  .tabs { display: flex; gap: 6px; padding: 0 16px 10px; }
+  .tab { flex: 1; padding: 9px; border-radius: 10px; border: 1px solid var(--line); background: var(--card);
+    font-size: 14px; font-weight: 700; color: var(--muted); }
+  .tab.on { background: var(--ink); color: #fff; border-color: var(--ink); }
+
+  .stats { display: flex; gap: 8px; padding: 0 16px 10px; }
+  .stat { flex: 1; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 8px 6px; text-align: center; }
+  .stat b { display: block; font-size: 17px; font-variant-numeric: tabular-nums; }
+  .stat small { font-size: 11px; color: var(--muted); }
+
+  .board { margin: 0 16px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 10px; }
+  .grid { display: grid; gap: 2px; background: var(--block); padding: 2px; border-radius: 6px; margin: 0 auto; touch-action: manipulation; }
+  .cell { background: var(--block); position: relative; display: flex; align-items: center; justify-content: center; user-select: none; }
+  .cell.open { background: var(--cell); cursor: pointer; }
+  .cell.inword { background: var(--word); }
+  .cell.cur { background: var(--sel); }
+  .cell.wrong .ch { color: var(--accent); }
+  .cell.hinted .ch { color: var(--accent-2); }
+  .cell.solved { background: #e3f4ea; }
+  .num { position: absolute; top: 2px; left: 3px; font-size: 10px; font-weight: 700; color: var(--muted); line-height: 1; }
+  .ch { font-size: clamp(18px, 6vw, 28px); font-weight: 800; }
+  .board.win .cell.open { animation: pop .5s ease both; }
+  @keyframes pop { 50% { transform: scale(1.12); } }
+
+  .clue-box { margin: 12px 16px 0; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 12px; }
+  .clue-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .dir { font-size: 12px; font-weight: 800; color: #fff; background: var(--accent-2); padding: 2px 8px; border-radius: 6px; }
+  .dir.v { background: var(--accent); }
+  .len { font-size: 12px; color: var(--muted); }
+  .clue-text { font-size: 16px; font-weight: 600; line-height: 1.45; min-height: 46px; }
+  .entry { display: flex; gap: 6px; margin-top: 10px; }
+  .entry input { flex: 1; min-width: 0; font-size: 20px; font-weight: 800; padding: 10px 12px; border: 2px solid var(--ink);
+    border-radius: 10px; font-family: inherit; text-align: center; letter-spacing: 4px; }
+  .entry input:focus { outline: none; border-color: var(--accent-2); }
+  .btn { border: none; border-radius: 10px; padding: 0 14px; font-size: 15px; font-weight: 800; }
+  .btn.main { background: var(--ink); color: #fff; }
+  .btn.ghost { background: #efeae0; color: var(--ink); }
+  .actions { display: flex; gap: 6px; margin-top: 8px; }
+  .actions .btn { flex: 1; padding: 11px 0; }
+  .btn.hint { background: #fff4dc; color: #8a5a00; }
+
+  .clue-list { margin: 12px 16px 0; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .clue-col h3 { font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+  .clue-col li { list-style: none; font-size: 13px; line-height: 1.4; padding: 6px 8px; border-radius: 8px; cursor: pointer; }
+  .clue-col li.cur { background: var(--sel); }
+  .clue-col li.done { color: var(--muted); text-decoration: line-through; }
+
+  .ad-slot { margin: 16px; min-height: 90px; border: 1px dashed var(--line); border-radius: 12px; display: flex;
+    align-items: center; justify-content: center; color: #b8b0a0; font-size: 12px; }
+  .premium .ad-slot { display: none; }
+
+  .modal { display: none; position: fixed; inset: 0; background: rgba(20,33,61,.55); z-index: 50; align-items: center; justify-content: center; padding: 20px; }
+  .modal.show { display: flex; }
+  .sheet { background: var(--card); border-radius: 18px; padding: 24px 20px; width: 100%; max-width: 380px; text-align: center; }
+  .sheet h2 { font-size: 22px; margin-bottom: 6px; }
+  .sheet p { color: var(--muted); font-size: 14px; line-height: 1.6; }
+  .big { font-size: 40px; font-weight: 900; margin: 10px 0; font-variant-numeric: tabular-nums; }
+  .sheet .row { display: flex; gap: 8px; margin-top: 16px; }
+  .sheet .row .btn { flex: 1; padding: 13px 0; }
+  .btn.accent { background: var(--accent); color: #fff; }
+  .mini-stats { display: flex; justify-content: space-around; margin: 14px 0 4px; }
+  .mini-stats div b { display: block; font-size: 20px; }
+  .mini-stats div small { color: var(--muted); font-size: 11px; }
+  .countdown { font-size: 13px; color: var(--muted); margin-top: 10px; }
+  .ad-sim { height: 160px; border-radius: 12px; background: repeating-linear-gradient(45deg,#f1ece2,#f1ece2 10px,#ebe4d7 10px,#ebe4d7 20px);
+    display: flex; align-items: center; justify-content: center; font-weight: 800; color: var(--muted); margin: 12px 0; }
+
+  .toast { position: fixed; left: 50%; bottom: 110px; transform: translateX(-50%); background: var(--ink); color: #fff;
+    padding: 10px 16px; border-radius: 20px; font-size: 14px; opacity: 0; transition: opacity .25s; pointer-events: none; z-index: 60; white-space: nowrap; }
+  .toast.show { opacity: 1; }
+  .help li { text-align: left; font-size: 14px; line-height: 1.6; margin: 0 0 6px 18px; color: var(--ink); }
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">한판 <span>가로세로</span></div>
+  <div style="display:flex;gap:6px">
+    <button class="icon-btn" id="helpBtn" aria-label="도움말">?</button>
+    <button class="icon-btn" id="statsBtn" aria-label="기록">📊</button>
+  </div>
+</header>
+
+<div class="tabs">
+  <button class="tab on" data-mode="daily">오늘의 퍼즐</button>
+  <button class="tab" data-mode="free">무한 연습</button>
+</div>
+
+<div class="stats">
+  <div class="stat"><b id="sTime">0:00</b><small>시간</small></div>
+  <div class="stat"><b id="sStreak">0🔥</b><small>연속</small></div>
+  <div class="stat"><b id="sHints">3💡</b><small>힌트</small></div>
+</div>
+
+<div class="board" id="board"><div class="grid" id="grid"></div></div>
+
+<div class="clue-box">
+  <div class="clue-head"><span class="dir" id="cDir">가로</span><span class="len" id="cLen"></span></div>
+  <div class="clue-text" id="cText"></div>
+  <form class="entry" id="entryForm" autocomplete="off">
+    <input id="entry" placeholder="정답 입력" enterkeyhint="done" lang="ko">
+    <button class="btn main" type="submit">입력</button>
+  </form>
+  <div class="actions">
+    <button class="btn ghost" id="prevBtn">◀ 이전</button>
+    <button class="btn hint" id="hintBtn">💡 한 글자</button>
+    <button class="btn ghost" id="nextBtn">다음 ▶</button>
+  </div>
+</div>
+
+<div class="clue-list">
+  <div class="clue-col"><h3>가로</h3><ul id="listH"></ul></div>
+  <div class="clue-col"><h3>세로</h3><ul id="listV"></ul></div>
+</div>
+
+<!-- 배너 광고: AdSense 승인 후 아래 ins 태그로 교체 -->
+<div class="ad-slot" id="adBanner">광고 영역</div>
+
+<!-- 완료 -->
+<div class="modal" id="winModal"><div class="sheet">
+  <h2 id="winTitle">완성! 🎉</h2>
+  <div class="big" id="winTime">0:00</div>
+  <p id="winSub"></p>
+  <div class="mini-stats">
+    <div><b id="wStreak">0</b><small>연속 일수</small></div>
+    <div><b id="wTotal">0</b><small>완료한 퍼즐</small></div>
+    <div><b id="wBest">-</b><small>최고 기록</small></div>
+  </div>
+  <div class="row">
+    <button class="btn accent" id="shareBtn">결과 공유</button>
+    <button class="btn ghost" id="moreBtn">한 판 더</button>
+  </div>
+  <div class="countdown" id="nextIn"></div>
+</div></div>
+
+<!-- 힌트 부족 → 보상형 광고 -->
+<div class="modal" id="hintModal"><div class="sheet">
+  <h2>힌트가 없어요</h2>
+  <p>짧은 광고를 보면 힌트 3개를 드려요.<br>매일 접속하면 힌트 1개가 충전됩니다.</p>
+  <div class="row">
+    <button class="btn ghost" id="hintNo">괜찮아요</button>
+    <button class="btn accent" id="hintAd">광고 보고 +3💡</button>
+  </div>
+</div></div>
+
+<!-- 광고 시뮬레이터 (실제 광고 미연결 시) -->
+<div class="modal" id="adModal"><div class="sheet">
+  <p>광고 (테스트 모드)</p>
+  <div class="ad-sim" id="adSim">5</div>
+  <p style="font-size:12px">AdSense H5 Games Ads 연결 시 실제 광고가 표시됩니다.</p>
+</div></div>
+
+<div class="modal" id="helpModal"><div class="sheet">
+  <h2>하는 법</h2>
+  <ul class="help" style="margin-top:12px">
+    <li>칸을 누르면 해당 단어의 문제가 나와요. 같은 칸을 한 번 더 누르면 가로/세로가 바뀌어요.</li>
+    <li>정답을 입력하고 <b>입력</b>을 누르세요. 한 칸에 한 글자(음절)입니다.</li>
+    <li>막히면 💡로 한 글자를 공개할 수 있어요.</li>
+    <li><b>오늘의 퍼즐</b>은 하루 한 번, 모두에게 같은 문제가 나옵니다. 기록을 친구와 비교해 보세요!</li>
+  </ul>
+  <div class="row"><button class="btn main" data-close>시작하기</button></div>
+</div></div>
+
+<div class="modal" id="statsModal"><div class="sheet">
+  <h2>내 기록</h2>
+  <div class="mini-stats">
+    <div><b id="tStreak">0</b><small>연속</small></div>
+    <div><b id="tMax">0</b><small>최장 연속</small></div>
+    <div><b id="tTotal">0</b><small>완료</small></div>
+    <div><b id="tBest">-</b><small>최고 기록</small></div>
+  </div>
+  <div class="row"><button class="btn main" data-close>닫기</button></div>
+</div></div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+/* ================= 단어 은행 (단어:힌트) ================= */
+const BANK = `사과:빨갛고 둥근 과일. 백설공주가 먹고 잠든 것
+사자:갈기가 멋진 동물의 왕
+사진:카메라로 찍어 남긴 장면
+사랑:누군가를 아끼고 좋아하는 마음
+사전:단어의 뜻을 찾아보는 책
+사막:모래가 끝없이 펼쳐진 메마른 땅
+사계절:봄·여름·가을·겨울을 함께 이르는 말
+과자:바삭하게 구운 간식
+과일:나무에 열리는 달콤한 먹거리
+과학:실험과 관찰로 자연을 탐구하는 학문
+자전거:페달을 밟아 두 바퀴를 굴리는 탈것
+자동차:엔진으로 도로를 달리는 탈것
+자유:얽매이지 않고 마음대로 할 수 있는 상태
+자석:쇠붙이를 끌어당기는 물체
+전기:전선을 타고 흐르는 에너지
+전화:멀리 있는 사람과 목소리로 이야기하는 기기
+전설:예로부터 전해 내려오는 이야기
+기차:레일 위를 달리는 긴 탈것
+기자:뉴스를 취재해 보도하는 사람
+기억:지난 일을 잊지 않고 떠올리는 것
+기린:목이 아주 긴 초식 동물
+차표:기차나 버스를 탈 때 사는 표
+차례:돌아오는 순서
+수박:초록 줄무늬 껍질에 빨간 속살의 여름 과일
+수학:숫자와 도형을 다루는 과목
+수영:물에서 헤엄치는 운동
+수건:씻고 나서 몸을 닦는 천
+수요일:화요일 다음 날
+요리:재료로 음식을 만드는 일
+일기:하루 동안 있었던 일을 적는 글
+일요일:한 주의 마지막 날
+리본:선물 포장에 묶는 장식 끈
+학교:학생들이 배우러 가는 곳
+학생:학교에 다니며 배우는 사람
+교실:학교에서 수업을 하는 방
+교과서:수업 시간에 쓰는 책
+생일:태어난 날
+생선:먹으려고 잡은 물고기
+선물:마음을 담아 건네는 물건
+선생님:학생을 가르치는 분
+물고기:아가미로 숨 쉬며 물속에 사는 동물
+고기:소·돼지·닭 등의 살
+고양이:야옹 하고 우는 반려동물
+고구마:군고구마로 즐겨 먹는 뿌리채소
+구름:하늘에 둥실 떠 있는 하얀 것
+마음:생각과 느낌이 생기는 곳
+마술:눈속임으로 신기한 일을 보여주는 기술
+마차:말이 끄는 수레
+바다:파도가 치는 넓고 짠 물
+바나나:노랗고 길쭉한 열대 과일
+나무:줄기와 가지, 잎이 있는 식물
+나비:꽃 사이를 팔랑팔랑 나는 곤충
+비행기:날개로 하늘을 나는 탈것
+비누:거품을 내어 손을 씻는 것
+행복:기쁘고 흐뭇한 상태
+가방:물건을 넣어 들거나 메고 다니는 것
+가수:노래를 부르는 직업
+가족:부모와 자식처럼 한 집안을 이루는 사람들
+가을:단풍이 물드는 계절
+방학:학교 수업을 일정 기간 쉬는 것
+방송:TV나 라디오로 내보내는 프로그램
+송이:꽃이나 열매를 세는 단위
+이불:잘 때 덮는 두툼한 것
+이름:사람이나 사물을 부르는 말
+이야기:어떤 일에 대해 말하는 것
+야구:투수가 던진 공을 타자가 방망이로 치는 경기
+구두:정장에 신는 가죽 신발
+두부:콩물을 굳혀 만든 하얀 음식
+부모:아버지와 어머니
+모자:햇빛을 가리려고 머리에 쓰는 것
+자랑:남에게 드러내어 뽐내는 것
+도서관:책을 빌려 읽는 곳
+도시:사람과 건물이 많이 모인 곳
+시계:시간을 알려주는 기계
+시장:물건을 사고파는 곳
+장미:가시가 있는 사랑의 꽃
+미소:소리 없이 빙긋 웃는 웃음
+소금:짠맛을 내는 하얀 조미료
+금요일:목요일 다음 날
+금메달:1등에게 주는 메달
+인형:사람이나 동물 모양의 장난감
+인사:만나거나 헤어질 때 하는 예절
+사람:생각하고 말을 하는 존재
+대학교:고등학교를 마치고 진학하는 학교
+대통령:나라를 대표하는 최고 지도자
+대나무:마디가 있고 속이 빈 판다의 먹이
+정원:꽃과 나무를 가꾸는 집 안의 뜰
+원숭이:바나나를 좋아하는 재주꾼 동물
+문어:다리가 여덟 개인 바다 동물
+어머니:엄마를 높여 부르는 말
+하늘:머리 위로 펼쳐진 파란 공간
+하마:입이 아주 큰 물가의 동물
+마을:시골에 집들이 모여 있는 곳
+지구:우리가 사는 푸른 행성
+지도:땅의 모습을 줄여 그린 그림
+지하철:땅속을 달리는 전철
+철도:기차가 다니는 길
+도로:자동차가 다니는 길
+로봇:사람처럼 움직이는 기계
+우유:젖소에게서 짠 하얀 음료
+우산:비 올 때 펼쳐 쓰는 것
+산책:바람 쐬러 천천히 걷는 것
+책상:공부할 때 앞에 두는 탁자
+상자:물건을 담는 네모난 통
+주스:과일을 짜서 만든 음료
+주사:병원에서 바늘로 약을 넣는 것
+주말:토요일과 일요일
+운동:몸을 움직여 건강을 지키는 것
+운동장:학교에서 뛰어노는 넓은 마당
+장갑:추울 때 손에 끼는 것
+동물:스스로 움직이며 사는 생명체
+동생:나보다 어린 형제자매
+물감:그림에 색을 칠하는 재료
+감자:땅속에서 자라는 둥근 채소
+감기:콧물과 기침이 나는 흔한 병
+기름:미끌미끌하여 물에 뜨는 액체
+김치:배추를 양념해 발효시킨 한국 음식
+김밥:김으로 밥과 재료를 말아 썬 음식
+밥상:밥과 반찬을 차려 놓는 상
+치마:다리를 감싸는 통으로 된 아래옷
+치약:칫솔에 짜서 이를 닦는 것
+약국:약을 지어 파는 곳
+국수:길고 가는 면으로 만든 요리
+수도:한 나라의 중심 도시
+한국:대한민국
+한복:한국의 전통 옷
+복숭아:분홍빛에 솜털이 난 여름 과일
+아기:갓 태어난 어린아이
+아침:하루가 시작되는 때
+침대:잠을 자는 가구
+대문:집의 큰 출입문
+문자:휴대폰으로 주고받는 짧은 글
+노래:가락에 맞춰 부르는 것
+연필:나무 속에 심이 든 필기구
+연극:무대에서 배우가 펼치는 공연
+극장:영화나 공연을 보는 곳
+장난감:아이들이 가지고 노는 물건
+필통:연필을 넣어 다니는 통
+통장:은행 거래를 기록하는 작은 책
+은행:돈을 맡기거나 빌리는 곳
+행운:뜻밖에 찾아온 좋은 운
+운명:미리 정해져 있다고 믿는 앞날
+명절:설날·추석처럼 해마다 기념하는 날
+영화:극장 스크린으로 보는 이야기
+화분:식물을 심어 기르는 그릇
+화가:그림을 그리는 사람
+가게:물건을 파는 작은 상점
+게임:규칙을 정해 즐기는 놀이
+분수:물을 높이 뿜어 올리는 장치
+배추:김치의 주재료가 되는 채소
+배구:네트 너머로 공을 쳐 넘기는 경기
+축구:공을 발로 차서 골을 넣는 경기
+농구:공을 링에 던져 넣는 경기
+구급차:환자를 병원으로 실어 나르는 차
+차고:자동차를 넣어 두는 곳
+고속도로:자동차가 빠르게 달리는 전용 도로
+경찰:범죄를 막고 질서를 지키는 사람
+경기:정해진 규칙으로 승부를 겨루는 일
+소방관:불을 끄고 사람을 구하는 사람
+관광:다른 곳의 풍경을 구경하며 다니는 것
+광고:상품을 널리 알리는 홍보
+고래:바다에 사는 가장 큰 동물
+피아노:흰 건반과 검은 건반이 있는 악기
+아이:나이가 어린 사람
+라면:꼬불꼬불한 면을 끓여 먹는 인스턴트 음식
+면도:수염을 깎는 것
+도장:이름을 새겨 찍는 물건
+장마:여름철 오래 계속되는 비
+마트:식료품과 생활용품을 파는 큰 상점
+시소:양쪽에 앉아 번갈아 오르내리는 놀이기구
+소풍:경치 좋은 곳으로 놀러 가는 것
+풍선:바람을 불어 부풀리는 고무 주머니
+선풍기:날개를 돌려 바람을 일으키는 가전
+기타:여섯 줄을 튕기는 현악기
+타조:날지 못하는 가장 큰 새
+조개:단단한 껍데기 두 장 속에 사는 바다 생물
+개미:줄지어 다니는 부지런한 곤충
+미술:그림·조각 등을 배우는 과목
+술래:숨바꼭질에서 숨은 사람을 찾는 역할
+눈사람:눈을 굴려 만든 사람 모양
+눈물:슬프거나 감동할 때 흐르는 것
+물병:물을 담아 다니는 병
+병원:아플 때 진료받으러 가는 곳
+원피스:위아래가 하나로 붙은 옷
+스키:눈 위를 미끄러져 내려오는 운동
+키위:갈색 털 속에 초록 속살이 있는 과일
+위로:슬픈 사람의 마음을 달래 주는 것
+여름:가장 더운 계절
+겨울:눈이 내리는 가장 추운 계절
+봄비:봄에 내리는 비
+주인:물건이나 동물을 가진 사람
+인터넷:전 세계 컴퓨터를 잇는 통신망
+넷플릭스:-
+스마트폰:손안의 작은 컴퓨터 같은 휴대전화
+폰트:-
+사다리:높은 곳에 오를 때 딛는 기구
+다리:강 위를 건너게 놓은 구조물
+리더:무리를 이끄는 사람
+더위:여름철의 뜨거운 기운
+위치:무엇이 있는 자리
+치즈:우유를 굳혀 만든 노란 음식
+즈음:-
+수도꼭지:돌려서 물을 틀고 잠그는 장치
+지갑:돈이나 카드를 넣는 작은 주머니
+갑옷:옛날 전쟁에서 몸을 보호하던 옷
+옷장:옷을 넣어 두는 가구
+장화:비 올 때 신는 목이 긴 신발
+화장실:볼일을 보는 곳
+실내:건물의 안
+내일:오늘의 다음 날
+일출:해가 떠오르는 것
+출구:밖으로 나가는 곳
+구조:위험에 빠진 사람을 구하는 것
+조각:돌이나 나무를 깎아 만든 작품
+각도:두 선이 벌어진 정도
+도토리:다람쥐가 좋아하는 참나무 열매
+토끼:귀가 길고 깡충깡충 뛰는 동물
+끼니:아침·점심·저녁처럼 끼마다 먹는 밥
+나라:국민과 영토로 이루어진 국가
+라디오:소리로만 듣는 방송 기기
+오리:꽥꽥 우는 물새
+리모컨:멀리서 TV를 조작하는 장치
+컴퓨터:정보를 처리하는 전자 기계
+터널:산이나 땅속을 뚫어 만든 길
+널뛰기:설날에 하는 전통 놀이, 판 위에서 번갈아 뛰기
+기온:공기의 온도
+온도:덥고 찬 정도를 나타내는 수치
+도마:칼질할 때 밑에 받치는 판
+마라톤:42.195km를 달리는 경주
+톤:-
+비빔밥:여러 나물을 밥에 넣고 비벼 먹는 음식
+밥솥:밥을 짓는 기구
+솥:-
+떡볶이:떡을 매콤한 양념에 볶은 분식
+이마:눈썹 위의 얼굴 부분
+마녀:빗자루를 타고 나는 동화 속 인물
+여우:꾀가 많은 꼬리 긴 동물
+우주:별과 행성이 있는 끝없는 공간
+주차장:차를 세워 두는 곳
+장사:물건을 사고파는 일
+사탕:입에 넣고 녹여 먹는 단 과자
+탕수육:튀긴 고기에 새콤달콤한 소스를 얹은 요리
+육지:바다가 아닌 땅
+지붕:집 맨 위를 덮은 부분
+가위:종이를 자르는 도구
+위성:행성 둘레를 도는 천체
+성탄절:12월 25일, 크리스마스
+절:스님이 사는 곳
+사이다:톡 쏘는 맑은 탄산음료
+다람쥐:볼에 도토리를 넣는 줄무늬 동물
+쥐:-
+거미:거미줄을 치는 다리 여덟 개 벌레
+미래:앞으로 올 때
+래:-
+수첩:들고 다니며 메모하는 작은 공책
+첩:-
+공책:글씨를 쓰는 빈 종이 묶음
+공원:사람들이 쉬고 산책하는 넓은 녹지
+원두:커피를 만드는 볶은 열매
+두더지:땅속에 굴을 파고 사는 동물
+지우개:연필 글씨를 지우는 문구
+개구리:개굴개굴 우는 양서류
+구리:전선에 쓰이는 붉은 금속
+리듬:음악의 규칙적인 박자 흐름
+기적:도저히 일어날 수 없을 것 같은 놀라운 일
+적금:매달 일정 금액을 모으는 저축
+금고:귀중품을 넣는 튼튼한 상자
+고추:매운맛을 내는 빨간 채소
+추석:한가위, 송편을 먹는 명절
+석양:저녁에 지는 해
+양말:발에 신는 얇은 것
+말투:말하는 버릇이나 방식
+투수:야구에서 공을 던지는 선수
+수염:턱이나 코밑에 나는 털
+염소:뿔과 턱수염이 있는 가축
+소나기:갑자기 쏟아졌다 그치는 비
+기념일:특별한 일을 기억하는 날`;
+
+const WORDS = BANK.split('\n').map(l => { const i = l.indexOf(':'); return { w: l.slice(0, i).trim(), h: l.slice(i + 1).trim() }; })
+  .filter(x => x.h && x.h !== '-' && [...x.w].length >= 2 && [...x.w].length <= 5);
+// 중복 제거
+const seen = new Set();
+for (let i = WORDS.length - 1; i >= 0; i--) { if (seen.has(WORDS[i].w)) WORDS.splice(i, 1); else seen.add(WORDS[i].w); }
+
+/* ================= 퍼즐 생성기 (시드 기반, 같은 날 = 같은 퍼즐) ================= */
+function rng(seed) { let a = seed >>> 0; return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a);
+  t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function shuffle(arr, r) { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+
+const N = 7;
+function generate(seed) {
+  let best = null;
+  for (let attempt = 0; attempt < 40; attempt++) {
+    const p = tryGenerate(seed * 31 + attempt);
+    if (!best || p.words.length > best.words.length || (p.words.length === best.words.length && p.R * p.C < best.R * best.C)) best = p;
+    if (best.words.length >= 8) break;
+  }
+  return best;
+}
+function tryGenerate(seed) {
+  const r = rng(seed);
+  const grid = Array.from({ length: N }, () => Array(N).fill(null));
+  const used = Array.from({ length: N }, () => Array(N).fill(''));  // 'H','V','HV'
+  const placed = [];
+  const pool = shuffle(WORDS, r);
+  const first = pool.find(x => [...x.w].length >= 4) || pool[0];
+  const fs = [...first.w];
+  put(first, fs, Math.floor(r() * 2) + 2, Math.floor((N - fs.length) / 2), 'H');
+
+  function at(rr, cc) { return rr < 0 || cc < 0 || rr >= N || cc >= N ? null : grid[rr][cc]; }
+  function canPlace(syl, r0, c0, dir) {
+    const dr = dir === 'V' ? 1 : 0, dc = dir === 'H' ? 1 : 0, L = syl.length;
+    if (r0 < 0 || c0 < 0 || r0 + dr * (L - 1) >= N || c0 + dc * (L - 1) >= N) return -1;
+    if (at(r0 - dr, c0 - dc) || at(r0 + dr * L, c0 + dc * L)) return -1;
+    let cross = 0;
+    for (let k = 0; k < L; k++) {
+      const rr = r0 + dr * k, cc = c0 + dc * k, g = grid[rr][cc];
+      if (g) { if (g !== syl[k] || used[rr][cc].includes(dir)) return -1; cross++; }
+      else if (at(rr + dc, cc + dr) || at(rr - dc, cc - dr)) return -1;
+    }
+    return cross;
+  }
+  function put(item, syl, r0, c0, dir) {
+    const dr = dir === 'V' ? 1 : 0, dc = dir === 'H' ? 1 : 0;
+    syl.forEach((s, k) => { grid[r0 + dr * k][c0 + dc * k] = s; used[r0 + dr * k][c0 + dc * k] += dir; });
+    placed.push({ word: item.w, hint: item.h, syl, r: r0, c: c0, dir });
+  }
+  for (let round = 0; round < 12 && placed.length < 9; round++) {
+    let added = false;
+    for (const item of shuffle(pool, r)) {
+      if (placed.some(p => p.word === item.w || p.word.includes(item.w) || item.w.includes(p.word))) continue;
+      const syl = [...item.w]; const opts = [];
+      for (let rr = 0; rr < N; rr++) for (let cc = 0; cc < N; cc++) {
+        const g = grid[rr][cc]; if (!g) continue;
+        syl.forEach((s, k) => { if (s !== g) return;
+          for (const dir of ['H', 'V']) {
+            const r0 = dir === 'V' ? rr - k : rr, c0 = dir === 'H' ? cc - k : cc;
+            const x = canPlace(syl, r0, c0, dir); if (x > 0) opts.push({ r0, c0, dir, x });
+          } });
+      }
+      if (opts.length) { opts.sort((a, b) => b.x - a.x); const o = opts[0].x > 1 ? opts[0] : opts[Math.floor(r() * opts.length)];
+        put(item, syl, o.r0, o.c0, o.dir); added = true; if (placed.length >= 9) break; }
+    }
+    if (!added) break;
+  }
+  // 사용 영역만 잘라내기
+  let r1 = N, r2 = 0, c1 = N, c2 = 0;
+  for (let rr = 0; rr < N; rr++) for (let cc = 0; cc < N; cc++) if (grid[rr][cc]) { r1 = Math.min(r1, rr); r2 = Math.max(r2, rr); c1 = Math.min(c1, cc); c2 = Math.max(c2, cc); }
+  const g2 = Array.from({ length: N }, () => Array(N).fill(null));
+  for (let rr = r1; rr <= r2; rr++) for (let cc = c1; cc <= c2; cc++) g2[rr - r1][cc - c1] = grid[rr][cc];
+  for (let rr = 0; rr < N; rr++) grid[rr] = g2[rr];
+  placed.forEach(p => { p.r -= r1; p.c -= c1; });
+  const R = r2 - r1 + 1, C = c2 - c1 + 1;
+  // 번호 매기기
+  const starts = {}; let n = 0;
+  for (let rr = 0; rr < N; rr++) for (let cc = 0; cc < N; cc++) {
+    if (placed.some(p => p.r === rr && p.c === cc)) starts[rr + ',' + cc] = ++n;
+  }
+  placed.forEach(p => p.num = starts[p.r + ',' + p.c]);
+  placed.sort((a, b) => a.dir === b.dir ? a.num - b.num : a.dir === 'H' ? -1 : 1);
+  return { grid, words: placed, starts, R, C };
+}
+
+/* ================= 상태 저장 ================= */
+const LS = {
+  get(k, d) { try { const v = localStorage.getItem('hp_' + k); return v ? JSON.parse(v) : d; } catch { return d; } },
+  set(k, v) { try { localStorage.setItem('hp_' + k, JSON.stringify(v)); } catch {} }
+};
+const todayKey = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+const dayNum = () => { const d = new Date(); return Math.floor((Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) - Date.UTC(2026, 0, 1)) / 864e5) + 1; };
+
+let stats = LS.get('stats', { streak: 0, max: 0, total: 0, best: null, last: null, hints: 3, lastLogin: null, premium: false });
+if (stats.lastLogin !== todayKey()) { if (stats.lastLogin) stats.hints = Math.min(stats.hints + 1, 9); stats.lastLogin = todayKey(); LS.set('stats', stats); }
+// 연속 기록이 끊겼는지 확인
+(function () { if (!stats.last) return; const y = new Date(); y.setDate(y.getDate() - 1);
+  const yk = y.getFullYear() + '-' + String(y.getMonth() + 1).padStart(2, '0') + '-' + String(y.getDate()).padStart(2, '0');
+  if (stats.last !== todayKey() && stats.last !== yk) { stats.streak = 0; LS.set('stats', stats); } })();
+if (stats.premium) document.body.classList.add('premium');
+
+/* ================= 게임 ================= */
+const $ = id => document.getElementById(id);
+let mode = 'daily', P, fill, hinted, cur = 0, curDir = 'H', elapsed = 0, timer = null, done = false, hintsUsed = 0, freeSeed;
+
+function load(m) {
+  mode = m; clearInterval(timer); done = false;
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('on', t.dataset.mode === m));
+  if (m === 'daily') {
+    const d = todayKey(); P = generate(Number(d.replace(/-/g, '')));
+    const s = LS.get('daily_' + d, null);
+    fill = s ? s.fill : blank(); hinted = s ? s.hinted : blank(false); elapsed = s ? s.elapsed : 0; hintsUsed = s ? s.hintsUsed : 0; done = s ? s.done : false;
+  } else {
+    freeSeed = Math.floor(Math.random() * 1e9); P = generate(freeSeed);
+    fill = blank(); hinted = blank(false); elapsed = 0; hintsUsed = 0;
+  }
+  cur = 0; curDir = P.words[0].dir;
+  $('board').classList.toggle('win', done);
+  render(); tick(); if (!done) timer = setInterval(() => { if (document.visibilityState === 'visible') { elapsed++; tick(); if (elapsed % 5 === 0) save(); } }, 1000);
+  if (done && mode === 'daily') setTimeout(showWin, 300);
+}
+function blank(v = '') { return Array.from({ length: N }, () => Array(N).fill(v)); }
+function save() { if (mode === 'daily') LS.set('daily_' + todayKey(), { fill, hinted, elapsed, hintsUsed, done }); }
+const fmt = s => Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+function tick() { $('sTime').textContent = fmt(elapsed); $('sStreak').textContent = stats.streak + '🔥'; $('sHints').textContent = stats.hints + '💡'; }
+
+function cellsOf(w) { const dr = w.dir === 'V' ? 1 : 0, dc = w.dir === 'H' ? 1 : 0; return w.syl.map((_, k) => [w.r + dr * k, w.c + dc * k]); }
+function wordSolved(w) { return cellsOf(w).every(([r, c], k) => fill[r][c] === w.syl[k]); }
+
+function render() {
+  const g = $('grid'); g.style.gridTemplateColumns = `repeat(${P.C},1fr)`; g.style.aspectRatio = P.C + '/' + P.R; g.style.width = `min(100%, calc(58vh * ${P.C / P.R}))`; g.innerHTML = '';
+  const w = P.words[cur]; const sel = new Set(cellsOf(w).map(x => x.join(',')));
+  for (let r = 0; r < P.R; r++) for (let c = 0; c < P.C; c++) {
+    const d = document.createElement('div'); d.className = 'cell';
+    if (P.grid[r][c]) {
+      d.classList.add('open');
+      if (sel.has(r + ',' + c)) d.classList.add('inword');
+      if (done) d.classList.add('solved');
+      if (hinted[r][c]) d.classList.add('hinted');
+      const num = P.starts[r + ',' + c]; if (num) d.innerHTML = `<span class="num">${num}</span>`;
+      d.innerHTML += `<span class="ch">${fill[r][c] || ''}</span>`;
+      d.onclick = () => tapCell(r, c);
+      d.style.animationDelay = ((r + c) * 40) + 'ms';
+    }
+    g.appendChild(d);
+  }
+  $('cDir').textContent = (w.dir === 'H' ? '가로 ' : '세로 ') + w.num; $('cDir').className = 'dir' + (w.dir === 'V' ? ' v' : '');
+  $('cLen').textContent = w.syl.length + '글자';
+  $('cText').textContent = w.hint;
+  $('entry').maxLength = w.syl.length + 2; $('entry').placeholder = '○'.repeat(w.syl.length);
+  ['H', 'V'].forEach(dir => {
+    const ul = $('list' + dir); ul.innerHTML = '';
+    P.words.forEach((x, i) => { if (x.dir !== dir) return; const li = document.createElement('li');
+      li.textContent = x.num + '. ' + x.hint; if (i === cur) li.classList.add('cur'); if (wordSolved(x)) li.classList.add('done');
+      li.onclick = () => select(i, true); ul.appendChild(li); });
+  });
+}
+function select(i, focus) { cur = i; curDir = P.words[i].dir; $('entry').value = ''; render(); if (focus) $('entry').focus({ preventScroll: true }); }
+function tapCell(r, c) {
+  const hits = P.words.map((w, i) => [w, i]).filter(([w]) => cellsOf(w).some(([a, b]) => a === r && b === c));
+  if (!hits.length) return;
+  const inCur = hits.find(([, i]) => i === cur);
+  const pick = inCur && hits.length > 1 ? hits.find(([, i]) => i !== cur) : (hits.find(([w]) => w.dir === curDir) || hits[0]);
+  select(pick[1], true);
+}
+function step(d) { const L = P.words.length; let i = cur;
+  for (let k = 0; k < L; k++) { i = (i + d + L) % L; if (!wordSolved(P.words[i])) return select(i, false); } select((cur + d + L) % L, false); }
+
+$('entryForm').onsubmit = e => {
+  e.preventDefault(); if (done) return;
+  const v = [...$('entry').value.replace(/[^가-힣A-Za-z0-9]/g, '')]; if (!v.length) return;
+  const w = P.words[cur];
+  cellsOf(w).forEach(([r, c], k) => { if (v[k] && !hinted[r][c]) fill[r][c] = v[k]; });
+  $('entry').value = ''; save();
+  if (wordSolved(w)) { toast('정답! ✨'); vibrate(15); }
+  else if (v.length >= w.syl.length) { toast('다시 생각해 보세요'); vibrate([30, 40, 30]); }
+  checkWin(); if (!done) { if (wordSolved(w)) step(1); else render(); }
+};
+$('prevBtn').onclick = () => step(-1);
+$('nextBtn').onclick = () => step(1);
+$('hintBtn').onclick = () => {
+  if (done) return;
+  const w = P.words[cur]; const cells = cellsOf(w).filter(([r, c], k) => fill[r][c] !== w.syl[k]);
+  if (!cells.length) return step(1);
+  if (stats.hints <= 0) return $('hintModal').classList.add('show');
+  const [r, c] = cells[0]; fill[r][c] = P.grid[r][c]; hinted[r][c] = true;
+  stats.hints--; hintsUsed++; LS.set('stats', stats); save(); tick(); checkWin(); if (!done) render();
+};
+
+function checkWin() {
+  for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) if (P.grid[r][c] && fill[r][c] !== P.grid[r][c]) return;
+  done = true; clearInterval(timer); stats.total++;
+  if (mode === 'daily') {
+    if (stats.last !== todayKey()) { stats.streak++; stats.max = Math.max(stats.max, stats.streak); stats.last = todayKey(); }
+    if (!hintsUsed && (stats.best == null || elapsed < stats.best)) stats.best = elapsed;
+  }
+  LS.set('stats', stats); save(); $('board').classList.add('win'); render(); tick(); vibrate([20, 50, 20, 50, 60]);
+  setTimeout(showWin, 900);
+}
+let nextTimer;
+function showWin() {
+  $('winTitle').textContent = mode === 'daily' ? `#${dayNum()} 오늘의 퍼즐 완성! 🎉` : '완성! 🎉';
+  $('winTime').textContent = fmt(elapsed);
+  $('winSub').textContent = hintsUsed ? `힌트 ${hintsUsed}개 사용` : '힌트 없이 완벽하게 풀었어요!';
+  $('wStreak').textContent = stats.streak; $('wTotal').textContent = stats.total; $('wBest').textContent = stats.best != null ? fmt(stats.best) : '-';
+  $('moreBtn').textContent = '무한 연습';
+  clearInterval(nextTimer);
+  const upd = () => { const t = new Date(); const m = new Date(t); m.setHours(24, 0, 0, 0); const s = Math.floor((m - t) / 1000);
+    $('nextIn').textContent = mode === 'daily' ? `다음 퍼즐까지 ${Math.floor(s / 3600)}시간 ${Math.floor(s % 3600 / 60)}분 ${s % 60}초` : ''; };
+  upd(); nextTimer = setInterval(upd, 1000);
+  $('winModal').classList.add('show');
+}
+function shareText() {
+  let rows = [];
+  for (let r = 0; r < P.R; r++) { let row = ''; let any = false;
+    for (let c = 0; c < P.C; c++) { if (P.grid[r][c]) { any = true; row += hinted[r][c] ? '🟨' : '🟩'; } else row += '⬜'; }
+    if (any) rows.push(row); }
+  const head = mode === 'daily' ? `한판 가로세로 #${dayNum()}` : '한판 가로세로 (연습)';
+  return `${head}\n⏱ ${fmt(elapsed)}  💡${hintsUsed}  🔥${stats.streak}\n${rows.join('\n')}\n${location.href.split('#')[0]}`;
+}
+$('shareBtn').onclick = async () => {
+  const t = shareText();
+  try { if (navigator.share) { await navigator.share({ text: t }); return; } } catch (e) { if (e.name === 'AbortError') return; }
+  try { await navigator.clipboard.writeText(t); toast('결과가 복사됐어요! 친구에게 붙여넣기 하세요'); }
+  catch { prompt('아래 내용을 복사하세요', t); }
+};
+$('moreBtn').onclick = () => { $('winModal').classList.remove('show'); showInterstitial(() => load('free')); };
+
+/* ================= 광고 ================= */
+let lastInterstitial = 0;
+function showInterstitial(next) {
+  // 전면 광고: 퍼즐 사이에만, 최소 3분 간격 (사용자 이탈 방지)
+  if (stats.premium || Date.now() - lastInterstitial < 180000) return next();
+  lastInterstitial = Date.now();
+  if (window.adBreak) { adBreak({ type: 'next', name: 'between-puzzles', adBreakDone: next }); return; }
+  next();
+}
+function showRewarded(onReward) {
+  if (window.adBreak) {
+    let given = false;
+    adBreak({ type: 'reward', name: 'hint-reward',
+      beforeReward: show => show(), adViewed: () => { given = true; onReward(); }, adDismissed: () => toast('광고를 끝까지 보면 힌트를 받을 수 있어요'),
+      adBreakDone: info => { if (!given && info.breakStatus !== 'viewed' && info.breakStatus !== 'dismissed') { onReward(); } } });
+    return;
+  }
+  // 테스트용 시뮬레이터
+  let s = 5; $('adSim').textContent = s; $('adModal').classList.add('show');
+  const t = setInterval(() => { s--; $('adSim').textContent = s || '✓'; if (s <= 0) { clearInterval(t); setTimeout(() => { $('adModal').classList.remove('show'); onReward(); }, 400); } }, 1000);
+}
+$('hintNo').onclick = () => $('hintModal').classList.remove('show');
+$('hintAd').onclick = () => { $('hintModal').classList.remove('show');
+  showRewarded(() => { stats.hints += 3; LS.set('stats', stats); tick(); toast('힌트 +3 💡'); }); };
+
+/* ================= 기타 UI ================= */
+document.querySelectorAll('.tab').forEach(t => t.onclick = () => { if (t.dataset.mode === mode && mode === 'daily') return; showInterstitial(() => load(t.dataset.mode)); });
+document.querySelectorAll('[data-close]').forEach(b => b.onclick = () => b.closest('.modal').classList.remove('show'));
+document.querySelectorAll('.modal').forEach(m => m.onclick = e => { if (e.target === m && m.id !== 'adModal') m.classList.remove('show'); });
+$('helpBtn').onclick = () => $('helpModal').classList.add('show');
+$('statsBtn').onclick = () => { $('tStreak').textContent = stats.streak; $('tMax').textContent = stats.max; $('tTotal').textContent = stats.total;
+  $('tBest').textContent = stats.best != null ? fmt(stats.best) : '-'; $('statsModal').classList.add('show'); };
+let toastT; function toast(m) { const t = $('toast'); t.textContent = m; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 1600); }
+function vibrate(p) { try { navigator.vibrate && navigator.vibrate(p); } catch {} }
+
+if (!LS.get('seenHelp', false)) { $('helpModal').classList.add('show'); LS.set('seenHelp', true); }
+load('daily');
+if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
+</script>
+</body>
+</html>
