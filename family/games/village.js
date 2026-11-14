@@ -74,11 +74,13 @@ const VIL = (() => {
 })();
 
 (() => {
+// 역할 그림: 도깨비 / 무당(방울) / 의원(약탕기) / 마을 사람(고양이 주민)
+const RART = { dok: 'dokkaebi', mudang: 'bell', uiwon: 'herb', vil: 'hero' };
 function Rules({ onClose }) {
   return html`<${Overlay} onClose=${onClose}><div class="rules">
     <h2>도깨비 마을 규칙</h2>
     <p>마을에 도깨비가 숨어들었어요! 모두 비밀 역할을 받고, 밤과 낮을 번갈아 보내요. 4~8명이 함께 해요.</p>
-    <h3>역할</h3><ul>${Object.values(VIL.ROLES).map(r => html`<li key=${r.name}><b>${r.name}</b> — ${r.desc}</li>`)}</ul>
+    <h3>역할 카드</h3><div class="gallery">${Object.entries(VIL.ROLES).map(([k, r]) => html`<div class="gcard" key=${k}><img src=${ARTURL(RART[k])} alt="" /><div><b>${r.name}</b><span>${r.desc}</span></div></div>`)}</div>
     <p class="small muted">4명: 도깨비 1·무당 1·마을 사람 2 / 5명: 의원 추가 / 6명 이상: 도깨비 2</p>
     <h3>밤</h3><ul><li>모두 폰으로 한 명을 골라요. 힘이 없는 마을 사람도 아무나 골라요. 그래야 누가 힘을 쓰는지 티가 안 나요.</li>
       <li>모두 고르면 밤이 끝나고, 도깨비에게 홀린 사람이 있으면 발표돼요. 사라진 사람은 그때부터 구경만 해요.</li></ul>
@@ -130,7 +132,7 @@ function Board({ room: s, me, busy, commit, patch, nameOf, isHost, close, restar
     ${s.status === 'play' && !amAlive ? html`<div class="me stack"><b>구경 중</b>${s.players.map(p => html`<span key=${p.id} class="small">${p.nick}: ${VIL.ROLES[s.roles[p.id]].name}${s.alive[p.id] ? '' : ' (사라짐)'}</span>`)}</div>` : null}
     ${isHost && s.status === 'play' && doneCount < al.length ? html`<p class="small muted" style="text-align:center">방장 폰이 모두 고르면 자동으로 다음 단계로 넘겨요. 방장은 이 화면을 켜 두세요.</p>` : null}
     <${LogList} log=${s.log} nameOf=${nameOf} />
-    ${showRole ? html`<${Overlay} onClose=${() => setShowRole(false)}><div class="role"><span class="small">나의 역할</span><div class="big">${R.name}</div><p>${R.desc}</p>
+    ${showRole ? html`<${Overlay} onClose=${() => setShowRole(false)}><div class="role"><span class="small">나의 역할</span><img src=${ARTURL(RART[role])} alt="" style="width:140px;height:140px;display:block;margin:6px auto" /><div class="big">${R.name}</div><p>${R.desc}</p>
       ${fellow.length ? html`<p><b>같은 편 도깨비:</b> ${fellow.join(', ')}</p>` : null}
       ${Object.keys(seen).length ? html`<p><b>알아낸 정체:</b> ${Object.entries(seen).map(([id, d]) => `${nameOf(id)}=${d ? '도깨비' : '사람'}`).join(', ')}</p>` : null}</div>
       <button class="btn primary" onClick=${() => setShowRole(false)}>닫기</button><//>` : null}

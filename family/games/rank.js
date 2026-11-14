@@ -108,7 +108,7 @@ function Rules({ onClose }) {
   return html`<${Overlay} onClose=${onClose}><div class="rules">
     <h2>도깨비 왕 규칙</h2>
     <p><b>목표:</b> 손에 든 카드를 남보다 빨리 털어요. 빨리 턴 순서대로 도깨비 왕 · 도깨비 장수 · 도깨비 · 노예 도깨비가 돼요. ${RANK.ROUNDS}판을 해서 점수가 가장 높은 사람이 이겨요. 3~6명이 함께 해요.</p>
-    <h3>카드의 세기</h3><p>3이 가장 약하고 4, 5 … 10, J, Q, K, A, 그리고 <b>2가 가장 셉니다</b>. 조커는 아무 숫자로 쓸 수 있고, 조커만 내면 무엇보다 세요.</p>
+    <h3>카드의 세기</h3><div class="row" style="gap:4px;flex-wrap:wrap">${['S3', 'S10', 'SJ', 'SQ', 'SK', 'SA', 'S2', 'JK1'].map(id => html`<${PCard} key=${id} id=${id} size="md" hint=${id === 'JK1' ? '만능' : null} />`)}</div><p>3이 가장 약하고 4, 5 … 10, J, Q, K, A, 그리고 <b>2가 가장 셉니다</b>. 조커는 아무 숫자로 쓸 수 있고, 조커만 내면 무엇보다 세요.</p>
     <h3>진행</h3><ul><li>첫 판은 ♣3을 가진 사람부터 시작해요. 같은 숫자 카드를 1~4장(조커 포함) 함께 내요.</li>
       <li>다음 사람은 <b>같은 장수</b>로 <b>더 높은 숫자</b>를 내거나 넘겨요. 넘긴 사람도 돌아오면 다시 낼 수 있어요.</li>
       <li>모두 넘기면 판을 치우고, 마지막에 낸 사람이 새로 아무 묶음이나 내요.</li></ul>
@@ -139,7 +139,7 @@ function Board({ room: s, me, busy, act, nameOf, isHost, close, restart }) {
       <span class="small muted"> · ${s.round}/${RANK.ROUNDS}판</span></div>
     <div class=${'me' + (myTurn ? ' turn' : '')}>
       <div class="row" style="justify-content:space-between"><b>${nameOf(myId)} (나) ${s.titles?.[myId] ? `· ${s.titles[myId]}` : ''}</b><span class="small">${hand.length}장 · <span class="score">${s.scores[myId]}</span>점</span></div>
-      <div class="fan">${hand.map(id => html`<${PCard} key=${id} id=${id} sel=${sel.includes(id)} onClick=${myTurn && !busy ? () => toggle(id) : null} />`)}</div>
+      <div class="fan">${hand.map(id => html`<${PCard} key=${id} id=${id} size="md" hint=${id.startsWith('JK') ? '만능' : null} sel=${sel.includes(id)} onClick=${myTurn && !busy ? () => toggle(id) : null} />`)}</div>
       ${s.exchange && s.round > 1 && (s.exchange.top === myId || s.exchange.low === myId) && s.status === 'play' ? html`<p class="small muted" style="text-align:center">
         ${s.exchange.low === myId ? `노예 도깨비라 ${s.exchange.give.length}장을 바치고 ${s.exchange.back.length}장을 돌려받았어요` : `노예 도깨비에게 좋은 카드 ${s.exchange.give.length}장을 받고 나쁜 카드를 돌려줬어요`}</p>` : null}
       ${myTurn ? html`<div class="actions">

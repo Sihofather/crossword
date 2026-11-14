@@ -165,14 +165,24 @@ function DCard({ c, cards, hidden, size, onClick, selectable, selected, flash })
   if (!c || hidden) return html`<button type="button" class=${'card back ' + (size || '') + (selectable ? ' selectable' : '') + (selected ? ' selected' : '')}
       onClick=${onClick} disabled=${!onClick} aria-label="뒤집힌 카드"></button>`;
   const d = cards[c], kind = DOK.KINDS[d.k];
-  const cls = ['card face', size || '', d.k !== 'n' ? 'special' : '', d.v < 0 ? 'neg' : '', d.v >= 12 ? 'big' : '', selectable ? 'selectable' : '', selected ? 'selected' : '', flash ? 'flash' : ''].join(' ');
+  const cls = ['card face', size || '', d.k !== 'n' ? 'special pic' : '', d.v < 0 ? 'neg' : '', d.v >= 12 ? 'big' : '', selectable ? 'selectable' : '', selected ? 'selected' : '', flash ? 'flash' : ''].join(' ');
+  if (d.k !== 'n' && size !== 'sm') return html`<button type="button" class=${cls} onClick=${onClick} disabled=${!onClick} aria-label=${DOK.cardName(d) + ' · ' + SHORT[d.k]}>
+    <span class="corner">${d.v}</span><img src=${ARTURL(KART[d.k])} alt="" /><span class="lbl">${kind.label}</span>${size === 'lg' ? html`<span class="desc">${SHORT[d.k]}</span>` : null}
+  </button>`;
   return html`<button type="button" class=${cls} onClick=${onClick} disabled=${!onClick} aria-label=${DOK.cardName(d)}>
-    ${d.k !== 'n' && size !== 'sm' ? html`<span class="corner">${d.v}</span>` : null}
-    <span class="num">${d.k === 'n' || size === 'sm' ? d.v : kindMark(d.k)}</span>
-    ${d.k !== 'n' && size !== 'sm' ? html`<span class="lbl">${kind.label}</span>` : null}
+    <span class="num">${d.v}</span>${d.k === 'n' && size === 'lg' ? html`<span class="lbl">${d.v}점</span>` : null}
   </button>`;
 }
-const kindMark = k => ({ gold: '金', lamp: '燈', eye: '眼', swap: '換', boss: '鬼' })[k];
+// 특수 카드 그림과 짧은 설명
+const KART = { lamp: 'lantern', eye: 'eye', swap: 'fox', gold: 'club', boss: 'bigdok' };
+const SHORT = { lamp: '버리면 내 카드 엿보기', eye: '버리면 남의 카드 엿보기', swap: '버리면 몰래 맞바꾸기', gold: '가장 좋은 카드', boss: '가장 나쁜 카드' };
+if (typeof document !== 'undefined') { const DSTYLE = document.createElement('style');
+DSTYLE.textContent = `.card.pic { display: grid; grid-template-rows: 1fr auto auto; place-items: center; padding: 4px 3px 3px; box-sizing: border-box; }
+  .card.pic img { width: 74%; min-height: 0; margin-top: calc(var(--w) * .12); }
+  .card.pic .lbl { position: static; font-size: calc(var(--w) * .15); }
+  .card.pic .desc { font-size: 10px; line-height: 1.15; color: #6b4b20; text-align: center; padding: 0 2px; }
+  .card.lg.pic { --w: 104px; }`;
+document.head.appendChild(DSTYLE); }
 
 function Rules({ onClose }) {
   const ex = k => html`<${DCard} c="x" cards=${{ x: { k, v: DOK.KINDS[k]?.v ?? 3 } }} size="sm" />`;
@@ -188,14 +198,9 @@ function Rules({ onClose }) {
       <li><b>짝 버리기</b> → 내 카드 2장을 골라 공개해요. 숫자가 같으면 둘 다 버려서 카드가 줄어요! 다르면 다시 엎고 벌칙으로 카드 1장을 더 받아요.</li>
       <li><b>셈!</b> → "이제 끝!"을 외쳐요 (한 바퀴 돈 뒤부터). 다른 사람들이 한 번씩만 더 하고 라운드가 끝나요.</li>
     </ul>
-    <h3>특수 카드 (덱에서 뽑아서 버릴 때만 능력 사용)</h3>
-    <div class="legend">
-      ${ex('lamp')}<span><b>등불 (5점)</b> 내 카드 1장 몰래 보기</span>
-      ${ex('eye')}<span><b>도깨비 눈 (6점)</b> 다른 사람 카드 1장 몰래 보기</span>
-      ${ex('swap')}<span><b>바꿔치기 (8점)</b> 내 카드 1장과 다른 사람 카드 1장을 안 보고 맞바꾸기</span>
-      ${ex('gold')}<span><b>금방망이 (−3점)</b> 제일 좋은 카드</span>
-      ${ex('boss')}<span><b>대장 도깨비 (12점)</b> 제일 나쁜 카드</span>
-    </div>
+    <h3>특수 카드 도감 (덱에서 뽑아서 버릴 때만 능력 사용)</h3>
+    <div class="gallery">${['lamp', 'eye', 'swap', 'gold', 'boss'].map(k => html`<div class="gcard" key=${k}><img src=${ARTURL(KART[k])} alt="" />
+      <div><b>${DOK.KINDS[k].name} (${DOK.KINDS[k].v}점)</b><span>${DOK.KINDS[k].desc}</span></div></div>`)}</div>
     <p class="small muted">일반 카드: 0~9 (0은 4장, 1~9는 5장씩)</p>
     <h3>점수</h3>
     <ul><li>라운드가 끝나면 모두 공개하고 합계가 내 점수가 돼요.</li>

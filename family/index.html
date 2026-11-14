@@ -116,7 +116,17 @@
     display: grid; grid-template-rows: auto 1fr; padding: 3px 4px; box-sizing: border-box; flex: 0 0 auto; position: relative; font-family: var(--f-display); }
   .pc.red { color: #c0283c; } .pc .r { font-size: calc(var(--w) * .32); line-height: 1; } .pc .s { font-size: calc(var(--w) * .42); align-self: center; justify-self: center; line-height: 1; }
   .pc.joker { background: linear-gradient(135deg, #ffd76a, #f07a3e); color: #2a1206; } .pc.joker.mono { background: linear-gradient(135deg, #e6e3f5, #8d88b8); }
-  .pc.lg { --w: 78px; } .pc.sm { --w: 32px; padding: 2px 3px; }
+  .pc.lg { --w: 78px; } .pc.sm { --w: 32px; padding: 2px 3px; } .pc.md { --w: 58px; }
+  .pc.pic { grid-template-rows: auto 1fr auto; }
+  .pc .cr { font-size: calc(var(--w) * .22); line-height: 1; display: flex; gap: 1px; align-items: baseline; }
+  .pc img { width: 86%; justify-self: center; align-self: center; min-height: 0; }
+  .pc .hint { font-family: var(--f-body); font-weight: 700; font-size: calc(var(--w) * .16); line-height: 1.1; text-align: center; color: #6b2a10; }
+  .pc.red .hint { color: #8a1428; }
+  .pc.sm .hint, .pc.sm img + .hint { display: none; }
+  .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+  .gcard { display: grid; grid-template-columns: 56px 1fr; gap: 8px; align-items: center; padding: 8px; border-radius: 12px; background: rgba(255,255,255,.05); border: 1px solid var(--line); }
+  .gcard img { width: 56px; height: 56px; }
+  .gcard b { display: block; } .gcard span { font-size: 12px; color: #ddd8f5; line-height: 1.35; }
   .pc.back { background: repeating-linear-gradient(45deg, #3a2f78 0 5px, #332a6b 5px 10px); border-color: #5b4fb0; }
   .pc.sel { transform: translateY(-10px); box-shadow: 0 0 0 3px var(--moon); }
   .pc.can { box-shadow: 0 0 0 2px var(--jade); }
@@ -182,16 +192,23 @@ function LogList({ log, nameOf }) {
 }
 // 트럼프 카드: id 형식 "S10", "HA", "JK1"(컬러 조커) "JK0"(흑백 조커)
 const SUITS = { S: '♠', H: '♥', D: '♦', C: '♣' };
-function PCard({ id, size, back, sel, can, dim, onClick }) {
+// 그림 카드: J=도깨비 졸개, Q=구미호, K=대장 도깨비, A=도깨비불, 조커=청룡(컬러)·저승사자(흑백)
+const FACE = { J: 'dokkaebi', Q: 'gumiho', K: 'bigdok', A: 'wisp' };
+const FACE_NAME = { J: '도깨비 졸개', Q: '구미호', K: '대장 도깨비', A: '도깨비불', JK1: '청룡 조커', JK0: '저승사자 조커' };
+function PCard({ id, size, back, sel, can, dim, onClick, hint }) {
   let inner, cls = 'pc ' + (size || '');
   if (back || !id) { cls += ' back'; inner = null; }
-  else if (id.startsWith('JK')) { cls += ' joker' + (id === 'JK0' ? ' mono' : ''); inner = html`<span class="r">JK</span><span class="s">${id === 'JK0' ? '☾' : '☀'}</span>`; }
-  else { const su = id[0], r = id.slice(1); if (su === 'H' || su === 'D') cls += ' red'; inner = html`<span class="r">${r}</span><span class="s">${SUITS[su]}</span>`; }
+  else if (id.startsWith('JK')) { cls += ' joker pic' + (id === 'JK0' ? ' mono' : '');
+    inner = html`<span class="cr">JK</span><img src=${ARTURL(id === 'JK0' ? 'reaper' : 'dragon')} alt="" />${hint ? html`<span class="hint">${hint}</span>` : null}`; }
+  else { const su = id[0], r = id.slice(1); if (su === 'H' || su === 'D') cls += ' red';
+    if (FACE[r]) { cls += ' pic'; inner = html`<span class="cr">${r}<small>${SUITS[su]}</small></span><img src=${ARTURL(FACE[r])} alt="" />${hint ? html`<span class="hint">${hint}</span>` : null}`; }
+    else inner = html`<span class="r">${r}</span><span class="s">${SUITS[su]}</span>${hint ? html`<span class="hint">${hint}</span>` : null}`; }
   if (sel) cls += ' sel'; if (can) cls += ' can'; if (dim) cls += ' dim';
-  const el = html`<span class=${cls} aria-label=${id || '뒷면'}>${inner}</span>`;
+  const el = html`<span class=${cls} aria-label=${id ? (FACE_NAME[id] || FACE_NAME[id.slice(1)] || id) + (hint ? ' · ' + hint : '') : '뒷면'}>${inner}</span>`;
   return onClick ? html`<button type="button" class="pc-btn" onClick=${onClick}>${el}</button>` : el;
 }
 </script>
+<script src="art.js" charset="utf-8"></script>
 <script src="games/dokkaebi.js"></script>
 <script src="games/onecard.js"></script>
 <script src="games/village.js"></script>

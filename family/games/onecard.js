@@ -105,9 +105,15 @@ function Rules({ onClose }) {
       <li><b>7:</b> 무늬를 원하는 것으로 바꿔요.</li><li><b>J:</b> 다음 사람을 건너뛰어요.</li>
       <li><b>Q:</b> 도는 방향을 바꿔요.</li><li><b>K:</b> 한 장 더 내요.</li>
       <li><b>조커:</b> 언제든 낼 수 있고, 조커 다음에는 아무 카드나 낼 수 있어요.</li></ul>
+    <h3>그림 카드 도감</h3>
+    <div class="gallery">${[['HA', '도깨비불 (A)', 'A는 공격 3장, ♠A는 5장'], ['HJ', '도깨비 졸개 (J)', '다음 사람을 건너뛰어요'], ['HQ', '구미호 (Q)', '도는 방향을 바꿔요'], ['HK', '대장 도깨비 (K)', '한 장 더 내요'],
+      ['JK1', '청룡 조커', '공격 7장. 언제든 낼 수 있어요'], ['JK0', '저승사자 조커', '공격 5장. 언제든 낼 수 있어요']].map(([id, n, d]) =>
+      html`<div class="gcard" key=${id}><${PCard} id=${id} size="md" /><div><b>${n}</b><span>${d}</span></div></div>`)}</div>
     <div class="row" style="margin-top:12px"><button class="btn primary" style="flex:1" onClick=${onClose}>알겠어요</button></div></div><//>`;
 }
 
+// 카드에 적는 효과
+const HINT = id => id === 'JK1' ? '공격 +7' : id === 'JK0' ? '공격 +5' : id === 'SA' ? '공격 +5' : ({ A: '공격 +3', '2': '공격 +2', '3': '공격 막기', '7': '무늬 바꾸기', J: '건너뛰기', Q: '방향 반대', K: '한 번 더' })[id.slice(1)];
 function Board({ room: s, me, busy, act, nameOf, isHost, close, restart }) {
   const myId = me.id, hand = (s.hands[myId] || []).slice().sort(sortCards);
   const myTurn = s.status === 'play' && ONE.cur(s) === myId;
@@ -126,7 +132,7 @@ function Board({ room: s, me, busy, act, nameOf, isHost, close, restart }) {
     <div class="table">
       <div class="pile"><button type="button" class="pc-btn" disabled=${!myTurn || busy} onClick=${() => act('draw')} aria-label="덱에서 가져오기"><${PCard} back size="lg" can=${myTurn} /></button>
         <span class="cap">덱 ${s.deck.length}장</span></div>
-      <div class="pile"><${PCard} id=${t} size="lg" /><span class="cap">${s.suit ? `무늬: ${SUITS[s.suit]}` : '버림더미'}</span></div>
+      <div class="pile"><${PCard} id=${t} size="lg" hint=${HINT(t)} /><span class="cap">${s.suit ? `무늬: ${SUITS[s.suit]}` : '버림더미'}</span></div>
       <div class="pile" style="text-align:center"><span class="display" style="font-size:22px">${s.dir === 1 ? '↻' : '↺'}</span>
         ${s.attack ? html`<span class="chip" style="border-color:var(--plum);color:#ffc2d1">공격 ${s.attack}장</span>` : html`<span class="cap">방향</span>`}</div>
     </div>
@@ -134,7 +140,7 @@ function Board({ room: s, me, busy, act, nameOf, isHost, close, restart }) {
     <div class=${'me' + (myTurn ? ' turn' : '')}>
       <div class="row" style="justify-content:space-between"><b>${nameOf(myId)} (나) · ${hand.length}장</b>
         ${myTurn && hand.length === 2 ? html`<button class=${'btn sm ' + (oneCall ? 'primary' : '')} onClick=${() => setOneCall(v => !v)}>${oneCall ? '원카드! ✓' : '원카드! 외치기'}</button>` : null}</div>
-      <div class="fan">${hand.map(id => html`<${PCard} key=${id} id=${id} can=${playable(id)} dim=${myTurn && !playable(id)} onClick=${playable(id) && !busy ? () => play(id) : null} />`)}</div>
+      <div class="fan">${hand.map(id => html`<${PCard} key=${id} id=${id} size="md" hint=${HINT(id)} can=${playable(id)} dim=${myTurn && !playable(id)} onClick=${playable(id) && !busy ? () => play(id) : null} />`)}</div>
       ${myTurn ? html`<div class="actions"><button class="btn wide" disabled=${busy} onClick=${() => act('draw')}>${s.attack ? `${s.attack}장 가져가기` : '덱에서 1장 가져오기'}</button></div>` : null}
     </div>
     <${LogList} log=${s.log} nameOf=${nameOf} />
@@ -148,7 +154,7 @@ function Board({ room: s, me, busy, act, nameOf, isHost, close, restart }) {
 const ORDER = 'SHDC', RORDER = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
 function sortCards(a, b) { if (a.startsWith('JK') || b.startsWith('JK')) return a.startsWith('JK') - b.startsWith('JK');
   return ORDER.indexOf(a[0]) - ORDER.indexOf(b[0]) || RORDER.indexOf(a.slice(1)) - RORDER.indexOf(b.slice(1)); }
-function Icon() { return html`<div class="row" style="gap:2px"><${PCard} id="HA" size="sm" /><${PCard} id="S7" size="sm" /><${PCard} id="JK1" size="sm" /></div>`; }
+function Icon() { return html`<div class="row" style="gap:2px"><${PCard} id="HK" size="sm" /><${PCard} id="SQ" size="sm" /><${PCard} id="JK1" size="sm" /></div>`; }
 GAMES.push({ id: 'onecard', name: '도깨비 원카드', who: '2~6명 · 10분', min: 2, max: 6, blurb: '같은 무늬나 숫자를 내며 공격하고 막는, 우리가 아는 그 원카드',
   start: ONE.start, act: ONE.act, Board, Rules, Icon });
 })();

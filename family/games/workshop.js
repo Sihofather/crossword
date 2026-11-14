@@ -101,13 +101,17 @@ const WS = (() => {
 })();
 
 (() => {
+// 공방 그림: 만드는 재료 (만능=도깨비 방망이, 생산 없음=보물 엽전), 의뢰=가장 많이 필요한 재료
+const RART = { wood: 'log', clay: 'jar', iron: 'ingot', silk: 'silk', any: 'club' };
+const RDESC = { wood: '목공소·장작 패는 곳에서 나와요. 지붕, 가마에 써요', clay: '옹기 가마·흙벽돌 마당에서 나와요. 그릇, 장독에 써요', iron: '풀무간·광산 움막에서 나와요. 농기구, 범종에 써요', silk: '누에 치는 집·뽕나무밭에서 나와요. 이불, 갓에 써요' };
+const cardArt = c => c.prod ? RART[c.prod] : c.need ? RART[Object.entries(c.need).sort((a, b) => b[1] - a[1])[0][0]] : 'coins';
 const Res = ({ k, n }) => html`<span class=${'res ' + k}>${WS.RNAME[k]}${n != null ? ' ' + n : ''}</span>`;
 const Cost = ({ cost }) => html`<span class="row" style="gap:4px;flex-wrap:wrap">${WS.RES.filter(k => cost[k]).map(k => html`<${Res} key=${k} k=${k} n=${cost[k]} />`)}</span>`;
 function Rules({ onClose }) {
   return html`<${Overlay} onClose=${onClose}><div class="rules">
     <h2>도깨비 장인 규칙</h2>
     <p><b>목표:</b> 공방을 지어 재료가 저절로 들어오게 만들고, 장터 의뢰를 납품해서 점수를 모아요. 누군가 <b>${WS.GOAL}점</b>을 넘기면 그 바퀴 끝에 게임이 끝나고, 점수가 가장 높은 사람이 이겨요. 2~4명이 함께 해요.</p>
-    <h3>재료</h3><p><${Res} k="wood" /> <${Res} k="clay" /> <${Res} k="iron" /> <${Res} k="silk" /> 네 가지. 한 사람이 최대 ${WS.CAP}개까지 가질 수 있어요.</p>
+    <h3>재료</h3><div class="gallery">${['wood', 'clay', 'iron', 'silk'].map(k => html`<div class="gcard" key=${k}><img src=${ARTURL(RART[k])} alt="" /><div><b>${WS.RNAME[k]}</b><span>${RDESC[k]}</span></div></div>`)}</div><p>재료는 이렇게 네 가지예요. 한 사람이 최대 ${WS.CAP}개까지 가질 수 있어요.</p>
     <h3>내 차례가 오면</h3><ul><li>먼저 <b>내 공방들이 재료를 1개씩 만들어 줘요</b> (자동). '만능' 공방은 가장 적은 재료를 만들어요.</li>
       <li>그다음 아래 중 하나를 해요.<ul><li><b>재료 받기:</b> 아무 재료 2개 (같은 것 2개도 돼요)</li>
         <li><b>공방 짓기:</b> 장터의 공방 1개를 비용을 내고 지어요. 생산 공방은 다음 차례부터 재료를 만들고, 큰 공방은 점수를 줘요.</li>
@@ -125,8 +129,8 @@ function Board({ room: s, me, busy, act, nameOf, isHost, close, restart }) {
   const prodLine = pid => { const c = {}; s.built[pid].forEach(id => { const p = WS.byId[id].prod; if (p) c[p] = (c[p] || 0) + 1; }); return c; };
   const Workshop = ({ id, tier }) => { const c = WS.byId[id], ok = myTurn && WS.canPay(r, c.cost);
     return html`<button type="button" class=${'wcard' + (ok ? ' can' : '')} disabled=${!ok || busy} onClick=${() => act('build', { card: id })}>
-      <h4>${c.name}</h4><${Cost} cost=${c.cost} />
-      <span class="small">${c.prod ? html`생산: ${c.prod === 'any' ? '만능 (가장 적은 재료)' : html`<${Res} k=${c.prod} />`}` : '생산 없음'}${c.pts ? html` · <b>${c.pts}점</b>` : null}</span></button>`; };
+      <div class="row" style="gap:8px;align-items:flex-start"><img src=${ARTURL(cardArt(c))} alt="" style="width:44px;height:44px;flex:0 0 auto" /><div class="stack" style="gap:4px;min-width:0"><h4>${c.name}</h4><${Cost} cost=${c.cost} /></div></div>
+      <span class="small">${c.prod ? html`매 차례 생산: ${c.prod === 'any' ? '만능 (가장 적은 재료)' : html`<${Res} k=${c.prod} />`}` : '생산 없음'}${c.pts ? html` · <b>${c.pts}점</b>` : null}</span></button>`; };
   return html`<div class="stack">
     <div class="opps">${s.players.filter(p => p.id !== myId).map(p => { const pl = prodLine(p.id);
       return html`<div key=${p.id} class=${'opp' + (s.status === 'play' && WS.cur(s) === p.id ? ' turn' : '')}>
@@ -153,7 +157,7 @@ function Board({ room: s, me, busy, act, nameOf, isHost, close, restart }) {
     <span class="small muted">장터 의뢰 (재료를 내고 점수)</span>
     <div class="grid2">${s.orders.map(id => { const o = WS.byId[id], ok = myTurn && WS.canPay(r, o.need);
       return html`<button key=${id} type="button" class=${'wcard' + (ok ? ' can' : '')} disabled=${!ok || busy} onClick=${() => act('deliver', { order: id })}>
-        <h4>${o.name}</h4><${Cost} cost=${o.need} /><b>${o.pts}점</b></button>`; })}</div>
+        <div class="row" style="gap:8px;align-items:flex-start"><img src=${ARTURL(cardArt(o))} alt="" style="width:44px;height:44px;flex:0 0 auto" /><div class="stack" style="gap:4px;min-width:0"><h4>${o.name}</h4><${Cost} cost=${o.need} /><b>${o.pts}점 · 재료를 내고 납품</b></div></div></button>`; })}</div>
     <span class="small muted">장터 공방 (지으면 내 것)</span>
     <div class="grid2">${[1, 2, 3].flatMap(t => s.market[t].map(id => html`<${Workshop} key=${id} id=${id} tier=${t} />`))}</div>
     <${LogList} log=${s.log} nameOf=${nameOf} />
