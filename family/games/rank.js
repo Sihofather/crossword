@@ -1,5 +1,5 @@
 'use strict';
-/* 게임: 양반과 머슴 (전래 '대통령' 방식 계급 카드게임, 오리지널 규칙) */
+/* 게임: 도깨비 왕 (전래 '대통령' 방식 계급 카드게임, 오리지널 규칙) */
 const RANK = (() => {
   const RANKS = ['3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A', '2'];
   const ROUNDS = 5;
@@ -7,7 +7,7 @@ const RANK = (() => {
   const deck = () => ['S', 'H', 'D', 'C'].flatMap(s => RANKS.map(r => s + r)).concat(['JK0', 'JK1']);
   const cur = s => s.players[s.turn].id;
   const live = s => s.players.map(p => p.id).filter(id => !s.finished.includes(id));
-  const titleOf = (n, i) => i === 0 ? '양반' : i === n - 1 ? '머슴' : (i === 1 && n >= 4 ? '중인' : '평민');
+  const titleOf = (n, i) => i === 0 ? '도깨비 왕' : i === n - 1 ? '꼬마 도깨비' : (i === 1 && n >= 4 ? '도깨비 장수' : '도깨비');
 
   // 같은 숫자 묶음 판정: 조커는 아무 숫자로 쓸 수 있음. 조커만 내면 가장 강함(16)
   function setInfo(cards) {
@@ -32,19 +32,19 @@ const RANK = (() => {
     s.finished = []; s.pile = null; s.passed = []; s.status = 'play'; s.exchange = null;
     const n = s.players.length, order = s.lastOrder;
     if (order && order.length === n) {
-      // 머슴 → 양반: 가장 좋은 카드, 양반 → 머슴: 가장 나쁜 카드 (3명이면 1장, 4명 이상이면 2장)
+      // 꼬마 도깨비 → 도깨비 왕: 가장 좋은 카드, 도깨비 왕 → 꼬마 도깨비: 가장 나쁜 카드 (3명이면 1장, 4명 이상이면 2장)
       const k = n >= 4 ? 2 : 1, top = order[0], low = order[n - 1];
       const byVal = id => s.hands[id].slice().sort((a, b) => val(a) - val(b));
       const give = byVal(low).slice(-k), back = byVal(top).slice(0, k);
       s.hands[low] = s.hands[low].filter(c => !give.includes(c)).concat(back);
       s.hands[top] = s.hands[top].filter(c => !back.includes(c)).concat(give);
       s.exchange = { top, low, give, back };
-      pushLog(s, low, `머슴이라 가장 좋은 카드 ${k}장을 {${top}}에게 바쳤어요`);
+      pushLog(s, low, `꼬마 도깨비라 가장 좋은 카드 ${k}장을 도깨비 왕 {${top}}에게 바쳤어요`);
       s.turn = s.players.findIndex(p => p.id === low);
     } else {
       s.turn = s.players.findIndex(p => s.hands[p.id].includes('C3'));
     }
-    pushLog(s, null, `${s.round}번째 판 시작! ${s.round === 1 ? '♣3을 가진 사람부터' : '머슴부터'} 내요`);
+    pushLog(s, null, `${s.round}번째 판 시작! ${s.round === 1 ? '♣3을 가진 사람부터' : '꼬마 도깨비부터'} 내요`);
     return s;
   }
   function advance(s) {
@@ -70,7 +70,7 @@ const RANK = (() => {
     s.lastOrder = s.finished.slice(); s.titles = {};
     s.lastOrder.forEach((id, i) => { s.titles[id] = titleOf(n, i); s.scores[id] += n - 1 - i; });
     s.status = s.round >= ROUNDS ? 'gameEnd' : 'roundEnd';
-    pushLog(s, s.lastOrder[0], '양반이 되었어요!');
+    pushLog(s, s.lastOrder[0], '도깨비 왕이 되었어요!');
   }
   function act(st, pid, type, a = {}) {
     const s = clone(st);
@@ -106,14 +106,14 @@ const RANK = (() => {
 (() => {
 function Rules({ onClose }) {
   return html`<${Overlay} onClose=${onClose}><div class="rules">
-    <h2>양반과 머슴 규칙</h2>
-    <p><b>목표:</b> 손에 든 카드를 남보다 빨리 털어요. 빨리 턴 순서대로 양반 · 중인 · 평민 · 머슴이 돼요. ${RANK.ROUNDS}판을 해서 점수가 가장 높은 사람이 이겨요. 3~6명이 함께 해요.</p>
+    <h2>도깨비 왕 규칙</h2>
+    <p><b>목표:</b> 손에 든 카드를 남보다 빨리 털어요. 빨리 턴 순서대로 도깨비 왕 · 도깨비 장수 · 도깨비 · 꼬마 도깨비가 돼요. ${RANK.ROUNDS}판을 해서 점수가 가장 높은 사람이 이겨요. 3~6명이 함께 해요.</p>
     <h3>카드의 세기</h3><p>3이 가장 약하고 4, 5 … 10, J, Q, K, A, 그리고 <b>2가 가장 셉니다</b>. 조커는 아무 숫자로 쓸 수 있고, 조커만 내면 무엇보다 세요.</p>
     <h3>진행</h3><ul><li>첫 판은 ♣3을 가진 사람부터 시작해요. 같은 숫자 카드를 1~4장(조커 포함) 함께 내요.</li>
       <li>다음 사람은 <b>같은 장수</b>로 <b>더 높은 숫자</b>를 내거나 넘겨요. 넘긴 사람도 돌아오면 다시 낼 수 있어요.</li>
       <li>모두 넘기면 판을 치우고, 마지막에 낸 사람이 새로 아무 묶음이나 내요.</li></ul>
-    <h3>신분 바꾸기</h3><ul><li>다음 판이 시작되면 <b>머슴은 가장 좋은 카드</b>를 양반에게 바치고, <b>양반은 가장 나쁜 카드</b>를 머슴에게 돌려줘요 (4명 이상이면 2장, 3명이면 1장). 자동으로 처리돼요.</li>
-      <li>머슴이 다음 판을 시작해요.</li></ul>
+    <h3>신분 바꾸기</h3><ul><li>다음 판이 시작되면 <b>꼬마 도깨비는 가장 좋은 카드</b>를 도깨비 왕에게 바치고, <b>도깨비 왕은 가장 나쁜 카드</b>를 꼬마 도깨비에게 돌려줘요 (4명 이상이면 2장, 3명이면 1장). 자동으로 처리돼요.</li>
+      <li>꼬마 도깨비가 다음 판을 시작해요.</li></ul>
     <h3>점수</h3><p>판마다 1등은 (인원−1)점, 꼴찌는 0점을 받아요.</p>
     <div class="row" style="margin-top:12px"><button class="btn primary" style="flex:1" onClick=${onClose}>알겠어요</button></div></div><//>`;
 }
@@ -141,7 +141,7 @@ function Board({ room: s, me, busy, act, nameOf, isHost, close, restart }) {
       <div class="row" style="justify-content:space-between"><b>${nameOf(myId)} (나) ${s.titles?.[myId] ? `· ${s.titles[myId]}` : ''}</b><span class="small">${hand.length}장 · <span class="score">${s.scores[myId]}</span>점</span></div>
       <div class="fan">${hand.map(id => html`<${PCard} key=${id} id=${id} sel=${sel.includes(id)} onClick=${myTurn && !busy ? () => toggle(id) : null} />`)}</div>
       ${s.exchange && s.round > 1 && (s.exchange.top === myId || s.exchange.low === myId) && s.status === 'play' ? html`<p class="small muted" style="text-align:center">
-        ${s.exchange.low === myId ? `머슴이라 ${s.exchange.give.length}장을 바치고 ${s.exchange.back.length}장을 돌려받았어요` : `머슴에게 좋은 카드 ${s.exchange.give.length}장을 받고 나쁜 카드를 돌려줬어요`}</p>` : null}
+        ${s.exchange.low === myId ? `꼬마 도깨비라 ${s.exchange.give.length}장을 바치고 ${s.exchange.back.length}장을 돌려받았어요` : `꼬마 도깨비에게 좋은 카드 ${s.exchange.give.length}장을 받고 나쁜 카드를 돌려줬어요`}</p>` : null}
       ${myTurn ? html`<div class="actions">
         <button class="btn" disabled=${busy || !s.pile} onClick=${() => act('pass')}>넘기기</button>
         <button class="btn primary" disabled=${busy || !ok} onClick=${() => act('play', { cards: sel })}>${sel.length ? `${sel.length}장 내기` : '카드를 고르세요'}</button></div>` : null}
@@ -155,6 +155,6 @@ function Board({ room: s, me, busy, act, nameOf, isHost, close, restart }) {
   </div>`;
 }
 function Icon() { return html`<div class="row" style="gap:2px"><${PCard} id="S2" size="sm" /><${PCard} id="H2" size="sm" /><${PCard} id="JK0" size="sm" /></div>`; }
-GAMES.push({ id: 'rank', name: '양반과 머슴', who: '3~6명 · 20분', min: 3, max: 6, blurb: '같은 숫자 묶음을 더 높게 내며 패를 털고, 판마다 신분이 뒤바뀌는 계급 카드게임',
+GAMES.push({ id: 'rank', name: '도깨비 왕', who: '3~6명 · 20분', min: 3, max: 6, blurb: '같은 숫자 묶음을 더 높게 내며 패를 털고, 판마다 신분이 뒤바뀌는 계급 카드게임',
   start: RANK.start, act: (s, pid, type, a) => type === 'next' ? (s.status === 'roundEnd' ? RANK.newRound(s) : (() => { throw Error('아직 판이 안 끝났어요'); })()) : RANK.act(s, pid, type, a), Board, Rules, Icon });
 })();

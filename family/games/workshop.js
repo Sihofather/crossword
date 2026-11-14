@@ -1,5 +1,5 @@
 'use strict';
-/* 게임: 장인 공방 (오리지널 생산 엔진 게임) */
+/* 게임: 도깨비 장인 (오리지널 생산 엔진 게임) */
 const WS = (() => {
   const RES = ['wood', 'clay', 'iron', 'silk'];
   const RNAME = { wood: '나무', clay: '흙', iron: '쇠', silk: '비단' };
@@ -105,7 +105,7 @@ const Res = ({ k, n }) => html`<span class=${'res ' + k}>${WS.RNAME[k]}${n != nu
 const Cost = ({ cost }) => html`<span class="row" style="gap:4px;flex-wrap:wrap">${WS.RES.filter(k => cost[k]).map(k => html`<${Res} key=${k} k=${k} n=${cost[k]} />`)}</span>`;
 function Rules({ onClose }) {
   return html`<${Overlay} onClose=${onClose}><div class="rules">
-    <h2>장인 공방 규칙</h2>
+    <h2>도깨비 장인 규칙</h2>
     <p><b>목표:</b> 공방을 지어 재료가 저절로 들어오게 만들고, 장터 의뢰를 납품해서 점수를 모아요. 누군가 <b>${WS.GOAL}점</b>을 넘기면 그 바퀴 끝에 게임이 끝나고, 점수가 가장 높은 사람이 이겨요. 2~4명이 함께 해요.</p>
     <h3>재료</h3><p><${Res} k="wood" /> <${Res} k="clay" /> <${Res} k="iron" /> <${Res} k="silk" /> 네 가지. 한 사람이 최대 ${WS.CAP}개까지 가질 수 있어요.</p>
     <h3>내 차례가 오면</h3><ul><li>먼저 <b>내 공방들이 재료를 1개씩 만들어 줘요</b> (자동). '만능' 공방은 가장 적은 재료를 만들어요.</li>
@@ -164,6 +164,6 @@ function Board({ room: s, me, busy, act, nameOf, isHost, close, restart }) {
   </div>`;
 }
 function Icon() { return html`<div class="stack" style="gap:4px;justify-items:center"><span class="row" style="gap:3px"><${Res} k="wood" /><${Res} k="iron" /></span><span class="row" style="gap:3px"><${Res} k="clay" /><${Res} k="silk" /></span></div>`; }
-GAMES.push({ id: 'workshop', name: '장인 공방', who: '2~4명 · 25분', min: 2, max: 4, blurb: '공방을 지어 재료가 저절로 들어오게 하고, 장터 의뢰를 납품해 점수를 모으는 생산 게임',
+GAMES.push({ id: 'workshop', name: '도깨비 장인', who: '2~4명 · 25분', min: 2, max: 4, blurb: '공방을 지어 재료가 저절로 들어오게 하고, 장터 의뢰를 납품해 점수를 모으는 생산 게임',
   start: WS.start, act: WS.act, Board, Rules, Icon });
 })();

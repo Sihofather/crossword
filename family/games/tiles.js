@@ -1,12 +1,12 @@
 'use strict';
-/* 게임: 오방 타일 (전래 '러미' 방식 숫자 타일 게임, 오리지널 규칙) */
+/* 게임: 도깨비 방망이 (전래 '러미' 방식 숫자 타일 게임, 오리지널 규칙) */
 const TIL = (() => {
   const COLORS = ['청', '적', '황', '백', '흑'];
   const MAXN = 10, START = 14, OPEN = 20, WILD_PENALTY = 15;
   const make = () => { const t = []; for (let c = 0; c < 5; c++) for (let n = 1; n <= MAXN; n++) for (let k = 0; k < 2; k++) t.push(`t${c}-${n}-${k}`); return t.concat(['w0', 'w1']); };
   const info = id => id[0] === 'w' ? { wild: true } : { c: +id.slice(1, id.indexOf('-')), n: +id.split('-')[1] };
   const cur = s => s.players[s.turn].id;
-  // 조합 판정: 같은 숫자 다른 색 3~5개(그룹) 또는 같은 색 연속 숫자 3개 이상(줄). 도깨비 타일은 만능
+  // 조합 판정: 같은 숫자 다른 색 3~5개(그룹) 또는 같은 색 연속 숫자 3개 이상(줄). 방망이 타일은 만능
   function meld(ids) {
     if (ids.length < 3) return null;
     const t = ids.map(info), w = t.filter(x => x.wild).length, p = t.filter(x => !x.wild);
@@ -77,19 +77,19 @@ const TIL = (() => {
 function Tile({ id, sel, staged, onClick, size }) {
   const t = TIL.info(id), style = size ? `--w:${size}px` : '';
   return html`<button type="button" class=${'tile ' + (t.wild ? 'wild' : 'c' + t.c) + (sel ? ' sel' : '') + (staged ? ' staged' : '')} style=${style}
-    onClick=${onClick} disabled=${!onClick} aria-label=${t.wild ? '도깨비 타일' : `${TIL.COLORS[t.c]} ${t.n}`}>${t.wild ? '鬼' : t.n}</button>`;
+    onClick=${onClick} disabled=${!onClick} aria-label=${t.wild ? '방망이 타일' : `${TIL.COLORS[t.c]} ${t.n}`}>${t.wild ? '방' : t.n}</button>`;
 }
 function Rules({ onClose }) {
   return html`<${Overlay} onClose=${onClose}><div class="rules">
-    <h2>오방 타일 규칙</h2>
+    <h2>도깨비 방망이 규칙</h2>
     <p><b>목표:</b> 내 타일을 가장 먼저 모두 내려놓으면 이겨요. 2~4명이 함께 해요.</p>
-    <h3>타일</h3><p>오방색 다섯 가지(청·적·황·백·흑) × 숫자 1~10 × 2벌, 그리고 아무 타일로나 쓸 수 있는 <b>도깨비 타일</b> 2개. 처음에 ${TIL.START}개씩 받아요.</p>
+    <h3>타일</h3><p>오방색 다섯 가지(청·적·황·백·흑) × 숫자 1~10 × 2벌, 그리고 아무 타일로나 쓸 수 있는 <b>방망이 타일</b> 2개. 처음에 ${TIL.START}개씩 받아요.</p>
     <h3>조합</h3><ul><li><b>모둠:</b> 같은 숫자, 서로 다른 색 3~5개 (예: 청7 적7 흑7)</li>
       <li><b>줄:</b> 같은 색, 이어진 숫자 3개 이상 (예: 황3 황4 황5 황6)</li></ul>
     <h3>내 차례</h3><ul><li>타일을 골라 <b>새 조합</b>을 만들거나, 판에 있는 조합에 <b>붙여요</b>. 여러 개를 한 번에 해도 돼요. 끝나면 <b>내려놓기 완료</b>.</li>
       <li>내려놓을 게 없으면 <b>타일 가져오기</b>로 1개를 가져가고 차례를 마쳐요.</li>
       <li><b>처음 내려놓을 때</b>는 내 타일로만 만든 새 조합의 숫자 합이 ${TIL.OPEN} 이상이어야 해요. 그 다음부터는 아무 조합에나 붙일 수 있어요.</li></ul>
-    <p class="small muted">가져올 타일이 다 떨어지고 모두 한 번씩 넘기면, 남은 타일 합이 가장 적은 사람이 이겨요 (도깨비 타일은 15점).</p>
+    <p class="small muted">가져올 타일이 다 떨어지고 모두 한 번씩 넘기면, 남은 타일 합이 가장 적은 사람이 이겨요 (방망이 타일은 15점).</p>
     <div class="row" style="margin-top:12px"><button class="btn primary" style="flex:1" onClick=${onClose}>알겠어요</button></div></div><//>`;
 }
 function Board({ room: s, me, busy, act, nameOf, isHost, say, close, restart }) {
@@ -135,6 +135,6 @@ function Board({ room: s, me, busy, act, nameOf, isHost, say, close, restart }) 
   </div>`;
 }
 function Icon() { return html`<div class="row" style="gap:3px"><${Tile} id="t0-7-0" size=${24} /><${Tile} id="t1-7-0" size=${24} /><${Tile} id="w0" size=${24} /></div>`; }
-GAMES.push({ id: 'tiles', name: '오방 타일', who: '2~4명 · 20분', min: 2, max: 4, blurb: '오방색 숫자 타일로 같은 숫자 모둠과 이어진 줄을 만들어 먼저 다 내려놓는 게임',
+GAMES.push({ id: 'tiles', name: '도깨비 방망이', who: '2~4명 · 20분', min: 2, max: 4, blurb: '오방색 숫자 타일로 같은 숫자 모둠과 이어진 줄을 만들어 먼저 다 내려놓는 게임',
   start: TIL.start, act: TIL.act, Board, Rules, Icon });
 })();
