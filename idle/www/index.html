@@ -578,12 +578,20 @@ function rewarded(placement, onReward) {
   // Capacitor + @capacitor-community/admob 연결 시
   if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.AdMob) {
     const A = window.Capacitor.Plugins.AdMob;
-    A.prepareRewardVideoAd({ adId: AD_IDS.rewarded }).then(() => A.showRewardVideoAd()).then(done).catch(() => toast('광고를 불러오지 못했어요'));
+    if (adBusy) return toast('광고를 불러오는 중이에요…');
+    adBusy = true; toast('광고를 불러오는 중이에요…');
+    let finished = false;
+    const fail = () => { if (finished) return; finished = true; adBusy = false; toast('지금은 광고가 없어요. 잠시 후 다시 시도해 주세요'); };
+    const timer = setTimeout(fail, 20000);  // 20초 안에 광고가 안 뜨면 포기
+    A.prepareRewardVideoAd({ adId: AD_IDS.rewarded })
+      .then(() => { if (finished) return; clearTimeout(timer); return A.showRewardVideoAd().then(() => { finished = true; adBusy = false; done(); }); })
+      .catch(() => { clearTimeout(timer); fail(); });
     return;
   }
   let s = 5; modal(`<p>광고 (테스트 모드)</p><div class="ad-box" id="adc">${s}</div><p style="font-size:11px">앱 빌드에서는 AdMob 보상형 광고가 재생됩니다</p>`, true);
   const t = setInterval(() => { s--; const e = $('adc'); if (e) e.textContent = s > 0 ? s : '✓'; if (s <= 0) { clearInterval(t); setTimeout(() => { closeModal(); done(); }, 300); } }, 1000);
 }
+let adBusy = false;
 const AD_IDS = { rewarded: 'ca-app-pub-3940256099942544/5224354917' }; // 구글 공식 테스트 ID — 출시 전 교체
 document.querySelectorAll('.buff[data-buff]').forEach(b => b.onclick = () => {
   const k = b.dataset.buff; if (buffOn(k) && S.buffs[k] - now() > 25 * 60e3) return toast('이미 적용 중이에요');
