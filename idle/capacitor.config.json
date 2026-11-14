@@ -1,0 +1,9 @@
+{
+  "appId": "com.example.nyangswordcat",
+  "appName": "냥검객 키우기",
+  "webDir": "www",
+  "android": { "backgroundColor": "#1b1430" },
+  "plugins": {
+    "AdMob": { "initializeForTesting": true }
+  }
+}

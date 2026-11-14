@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>냥검객 키우기</title>
+<meta name="description" content="고양이 검객이 요괴를 베며 성장하는 방치형 RPG. 꺼 두어도 강해집니다.">
+<meta name="theme-color" content="#1b1430">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg">
+<style>
+  :root {
+    --bg: #1b1430; --panel: #261d42; --panel2: #31265a; --line: #43367a; --text: #f3eefe; --muted: #a99fcc;
+    --gold: #ffcf4a; --gem: #6fe3ff; --soul: #c58bff; --red: #ff5d6c; --green: #4fd18b; --accent: #ff8a3d;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; user-select: none; }
+  html, body { height: 100%; background: #0f0b1d; color: var(--text); overflow: hidden;
+    font-family: 'Pretendard', 'Apple SD Gothic Neo', 'Malgun Gothic', system-ui, sans-serif; }
+  #app { max-width: 480px; height: 100%; margin: 0 auto; display: flex; flex-direction: column; background: var(--bg); position: relative; }
+  button { font-family: inherit; cursor: pointer; border: none; color: inherit; }
+
+  /* 상단 */
+  .top { display: flex; gap: 6px; padding: calc(env(safe-area-inset-top) + 8px) 10px 6px; background: #150f27; }
+  .cur { flex: 1; display: flex; align-items: center; gap: 4px; background: #0f0b1d; border-radius: 20px; padding: 4px 10px; font-weight: 800; font-size: 14px; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; }
+  .cur i { font-style: normal; font-size: 15px; }
+  .cur.gold b { color: var(--gold); } .cur.gem b { color: var(--gem); } .cur.soul b { color: var(--soul); }
+
+  /* 전투 */
+  .stage-bar { display: flex; align-items: center; justify-content: space-between; padding: 6px 12px; font-size: 13px; background: #150f27; }
+  .stage-name { font-weight: 800; }
+  .waves { display: flex; gap: 3px; }
+  .waves span { width: 12px; height: 6px; border-radius: 3px; background: #3a2f63; }
+  .waves span.on { background: var(--accent); }
+  .waves span.boss { width: 18px; }
+  .scene-wrap { position: relative; height: 34vh; min-height: 210px; }
+  canvas { display: block; width: 100%; height: 100%; }
+  .boss-timer { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,.55); padding: 3px 12px; border-radius: 12px; font-size: 13px; font-weight: 800; color: var(--red); display: none; }
+  .boss-btn { position: absolute; right: 10px; bottom: 10px; background: linear-gradient(#ff6d5a, #d93d4b); padding: 8px 14px; border-radius: 12px; font-weight: 900; font-size: 14px; box-shadow: 0 3px 0 #8f1d2c; display: none; animation: pulse 1.2s infinite; }
+  @keyframes pulse { 50% { transform: scale(1.06); } }
+  .dps { position: absolute; left: 10px; bottom: 10px; font-size: 11px; color: var(--muted); background: rgba(0,0,0,.4); padding: 3px 8px; border-radius: 8px; }
+
+  /* 버프 */
+  .buffs { display: flex; gap: 6px; padding: 8px 10px; background: #150f27; }
+  .buff { flex: 1; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 6px 4px; text-align: center; font-size: 11px; color: var(--muted); position: relative; overflow: hidden; }
+  .buff b { display: block; font-size: 13px; color: var(--text); }
+  .buff.on { border-color: var(--green); }
+  .buff.on b { color: var(--green); }
+  .buff .tv { position: absolute; top: 2px; right: 4px; font-size: 9px; background: var(--accent); color: #fff; border-radius: 4px; padding: 0 3px; }
+
+  /* 패널 */
+  .panel { flex: 1; overflow-y: auto; padding: 8px 10px 12px; -webkit-overflow-scrolling: touch; }
+  .row { display: flex; align-items: center; gap: 10px; background: var(--panel); border-radius: 14px; padding: 10px; margin-bottom: 8px; }
+  .row .ic { width: 44px; height: 44px; border-radius: 12px; background: var(--panel2); display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0; }
+  .row .info { flex: 1; min-width: 0; }
+  .row .t { font-weight: 800; font-size: 14px; }
+  .row .t small { color: var(--muted); font-weight: 600; margin-left: 4px; }
+  .row .d { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .buy { min-width: 92px; padding: 8px 8px; border-radius: 12px; background: linear-gradient(#ffb23f, #f08a1c); box-shadow: 0 3px 0 #a5560b; font-weight: 900; font-size: 13px; line-height: 1.2; }
+  .buy small { display: block; font-size: 10px; font-weight: 700; opacity: .85; }
+  .buy:disabled { background: #3a2f63; box-shadow: 0 3px 0 #251d44; color: #7d72a8; }
+  .buy.gem { background: linear-gradient(#5fd8ff, #2a9bd6); box-shadow: 0 3px 0 #145f88; }
+  .buy.green { background: linear-gradient(#5fe39a, #26a865); box-shadow: 0 3px 0 #146b3d; }
+  .buy.purple { background: linear-gradient(#c58bff, #8a4bd8); box-shadow: 0 3px 0 #552a90; }
+  .buy:active:not(:disabled) { transform: translateY(2px); box-shadow: none; }
+  .multi { display: flex; gap: 6px; margin-bottom: 8px; }
+  .multi button { flex: 1; padding: 6px; border-radius: 10px; background: var(--panel); font-size: 12px; font-weight: 800; color: var(--muted); }
+  .multi button.on { background: var(--accent); color: #fff; }
+  .sec { font-size: 12px; color: var(--muted); font-weight: 800; margin: 12px 2px 6px; }
+  .card { background: var(--panel); border-radius: 14px; padding: 14px; margin-bottom: 8px; }
+  .card h3 { font-size: 16px; margin-bottom: 4px; }
+  .card p { font-size: 13px; color: var(--muted); line-height: 1.5; }
+  .gacha-btns { display: flex; gap: 8px; margin-top: 12px; }
+  .gacha-btns .buy { flex: 1; padding: 12px; font-size: 15px; }
+  .wgrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .w { aspect-ratio: 1; border-radius: 12px; background: var(--panel2); display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; font-size: 24px; border: 2px solid transparent; }
+  .w.locked { opacity: .25; filter: grayscale(1); }
+  .w.eq { border-color: var(--gold); }
+  .w .cnt { position: absolute; bottom: 2px; right: 5px; font-size: 10px; font-weight: 800; color: var(--text); }
+  .w .gr { position: absolute; top: 2px; left: 5px; font-size: 9px; font-weight: 900; }
+  .w .bar { position: absolute; left: 4px; right: 4px; bottom: 15px; height: 3px; background: #0005; border-radius: 2px; overflow: hidden; }
+  .w .bar i { display: block; height: 100%; background: var(--green); }
+
+  /* 하단 탭 */
+  .tabs { display: flex; background: #150f27; padding: 6px 6px calc(env(safe-area-inset-bottom) + 6px); gap: 4px; }
+  .tab { flex: 1; padding: 6px 0 4px; border-radius: 12px; font-size: 11px; font-weight: 800; color: var(--muted); background: none; position: relative; }
+  .tab .e { display: block; font-size: 22px; margin-bottom: 1px; }
+  .tab.on { background: var(--panel); color: var(--text); }
+  .tab .dot { position: absolute; top: 4px; right: 18%; width: 8px; height: 8px; border-radius: 50%; background: var(--red); display: none; }
+  .tab .dot.show { display: block; }
+
+  /* 모달 */
+  .modal { position: absolute; inset: 0; background: rgba(8,5,18,.75); display: none; align-items: center; justify-content: center; padding: 20px; z-index: 50; }
+  .modal.show { display: flex; }
+  .sheet { background: var(--panel); border: 1px solid var(--line); border-radius: 20px; padding: 22px 18px; width: 100%; max-width: 360px; text-align: center; animation: up .25s ease; }
+  @keyframes up { from { transform: translateY(20px); opacity: 0; } }
+  .sheet h2 { font-size: 20px; margin-bottom: 8px; }
+  .sheet p { font-size: 14px; color: var(--muted); line-height: 1.6; }
+  .sheet .big { font-size: 30px; font-weight: 900; margin: 12px 0; color: var(--gold); }
+  .sheet .btns { display: flex; gap: 8px; margin-top: 16px; }
+  .sheet .btns .buy { flex: 1; padding: 12px; font-size: 14px; }
+  .sheet .btns .ghost { flex: 1; padding: 12px; border-radius: 12px; background: var(--panel2); font-weight: 800; }
+  .pulls { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 12px 0; }
+  .pulls .w { animation: flip .35s ease both; }
+  @keyframes flip { from { transform: rotateY(90deg) scale(.6); opacity: 0; } }
+  .ad-box { height: 180px; border-radius: 14px; margin: 12px 0; background: repeating-linear-gradient(45deg, #31265a, #31265a 12px, #2a2050 12px, #2a2050 24px); display: flex; align-items: center; justify-content: center; font-size: 40px; font-weight: 900; color: var(--muted); }
+  .toast { position: absolute; top: 70px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,.8); padding: 8px 16px; border-radius: 20px; font-size: 13px; font-weight: 700; z-index: 60; opacity: 0; transition: opacity .2s; pointer-events: none; white-space: nowrap; }
+  .toast.show { opacity: 1; }
+  .att { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-top: 10px; }
+  .att div { background: var(--panel2); border-radius: 8px; padding: 6px 0; font-size: 10px; color: var(--muted); }
+  .att div b { display: block; color: var(--gem); font-size: 12px; }
+  .att div.done { background: #2b5a45; color: #bfe; }
+  .att div.today { outline: 2px solid var(--gold); }
+  .prog { height: 6px; border-radius: 3px; background: #0006; margin-top: 6px; overflow: hidden; }
+  .prog i { display: block; height: 100%; background: var(--green); }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="top">
+    <div class="cur gold"><i>🪙</i><b id="gold">0</b></div>
+    <div class="cur gem"><i>💎</i><b id="gems">0</b></div>
+    <div class="cur soul"><i>🔮</i><b id="souls">0</b></div>
+  </div>
+  <div class="stage-bar">
+    <span class="stage-name" id="stageName">1-1</span>
+    <div class="waves" id="waves"></div>
+  </div>
+  <div class="scene-wrap">
+    <canvas id="cv"></canvas>
+    <div class="boss-timer" id="bossTimer">30.0</div>
+    <button class="boss-btn" id="bossBtn">⚔️ 보스 도전</button>
+    <div class="dps" id="dps">DPS 0</div>
+  </div>
+  <div class="buffs">
+    <button class="buff" data-buff="atk"><span class="tv">AD</span><b>공격 x2</b><span class="bt">30분</span></button>
+    <button class="buff" data-buff="gold"><span class="tv">AD</span><b>골드 x2</b><span class="bt">30분</span></button>
+    <button class="buff" data-buff="spd"><span class="tv">AD</span><b>공속 x1.5</b><span class="bt">30분</span></button>
+    <button class="buff" id="gemAd"><span class="tv">AD</span><b>💎 +50</b><span class="bt" id="gemAdLeft">5회</span></button>
+  </div>
+  <div class="panel" id="panel"></div>
+  <div class="tabs">
+    <button class="tab on" data-tab="grow"><span class="e">⚔️</span>성장</button>
+    <button class="tab" data-tab="gear"><span class="e">🗡️</span>장비</button>
+    <button class="tab" data-tab="soul"><span class="e">🔮</span>환생</button>
+    <button class="tab" data-tab="quest"><span class="e">📜</span>임무<i class="dot" id="questDot"></i></button>
+    <button class="tab" data-tab="shop"><span class="e">🛒</span>상점</button>
+  </div>
+
+  <div class="modal" id="modal"><div class="sheet" id="sheet"></div></div>
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+'use strict';
+/* =====================================================================
+   밸런스 (순수 함수 — balance-sim.js 에서도 그대로 사용)
+   ===================================================================== */
+const B = {
+  idx: (stage, wave) => (stage - 1) * 10 + (wave - 1),
+  // 150 스테이지 이후 성장 곡선 완화 (숫자 오버플로 방지 · 후반 페이스 유지)
+  eff: i => i <= 1500 ? i : 1500 + (i - 1500) * 0.5,
+  hp: (stage, wave) => 5 * Math.pow(1.12, B.eff(B.idx(stage, wave))) * (wave === 10 ? 12 : 1),
+  goldDrop: (stage, wave) => 2.5 * Math.pow(1.115, B.eff(B.idx(stage, wave))) * (wave === 10 ? 10 : 1),
+  bossTime: 30,
+  ups: {
+    atk:   { name: '공격력',     ic: '🗡️', base: 10,  g: 1.068, max: 1e9, desc: L => `공격력 ${fmt(B.baseAtk(L))}` },
+    spd:   { name: '공격 속도',  ic: '💨', base: 60,  g: 1.32,  max: 50,  desc: L => `초당 ${(1 + 0.04 * L).toFixed(2)}회` },
+    crit:  { name: '치명타 확률', ic: '🎯', base: 120, g: 1.38,  max: 45,  desc: L => `${5 + L}%` },
+    critd: { name: '치명타 피해', ic: '💥', base: 90,  g: 1.24,  max: 1e9, desc: L => `${150 + L * 12}%` },
+    gold:  { name: '골드 획득',   ic: '🪙', base: 40,  g: 1.19,  max: 1e9, desc: L => `+${L * 10}%` },
+  },
+  cost: (k, L) => Math.ceil(B.ups[k].base * Math.pow(B.ups[k].g, L)),
+  baseAtk: L => 5 * (1 + L) * Math.pow(1.045, L),
+  // 무기: 6등급 x 4단계 = 24종
+  equipMult: i => i < 0 ? 1 : Math.pow(1.3, i + 1),
+  ownedBonus: i => 0.12 * Math.pow(1.33, i),
+  soulsFor: maxStage => maxStage < 15 ? 0 : Math.floor(3 * Math.pow(1.16, B.eff((maxStage - 15) * 10) / 10) + (maxStage - 14) * 2),
+  soulMult: s => 1 + 0.1 * s,
+};
+const TIERS = [
+  { n: '일반', c: '#b9b3cc', p: 0.62 }, { n: '고급', c: '#5fe39a', p: 0.27 }, { n: '희귀', c: '#5fb8ff', p: 0.085 },
+  { n: '영웅', c: '#c58bff', p: 0.022 }, { n: '전설', c: '#ffcf4a', p: 0.0027 }, { n: '신화', c: '#ff5d6c', p: 0.0003 },
+];
+const WICON = ['🔪', '🗡️', '⚔️', '🪓', '🔱', '🪄'];
+const WNAME = ['나뭇가지 검', '무쇠 단검', '청동 장검', '강철 도', '은빛 검', '청룡도', '월광검', '백호의 발톱', '현무 대검', '주작 깃검',
+  '도깨비 방망이', '구미호 꼬리검', '이무기 비늘검', '해태의 뿔', '산신의 지팡이', '용왕 삼지창', '저승사자 낫', '천둥 신검',
+  '단군의 검', '금강저', '여의주 검', '하늘 열쇠', '태극 신검', '냥신의 발톱'];
+const THEMES = [
+  { n: '대나무 숲', sky: ['#3d6b4f', '#a7d7a0'], hill: '#24402f', mobs: ['🐗', '🐍', '🦡', '🐺'], boss: '🐻' },
+  { n: '도깨비 고개', sky: ['#3b2a5c', '#9b7fc4'], hill: '#251a3d', mobs: ['👺', '👻', '🦇', '🕷️'], boss: '👹' },
+  { n: '여우 골짜기', sky: ['#7a3a2a', '#f2a65a'], hill: '#4a2218', mobs: ['🦊', '🦝', '🐾', '🍂'], boss: '🦊' },
+  { n: '용궁 해변', sky: ['#1d4e89', '#7fd1e8'], hill: '#123459', mobs: ['🦀', '🐙', '🦈', '🐡'], boss: '🐉' },
+  { n: '저승 길', sky: ['#1a1026', '#5a3b6e'], hill: '#0d0816', mobs: ['💀', '👻', '🧟', '🕯️'], boss: '☠️' },
+];
+
+/* =====================================================================
+   숫자 표기 (만·억·조·경…)
+   ===================================================================== */
+const UNITS = ['', '만', '억', '조', '경', '해', '자', '양', '구', '간', '정', '재', '극'];
+function fmt(n) {
+  if (!isFinite(n)) return '∞';
+  if (n < 10000) return Math.floor(n).toLocaleString('ko-KR');
+  const u = Math.floor(Math.log10(n) / 4); if (u >= UNITS.length) return n.toExponential(2).replace('+', '');
+  const v = n / Math.pow(10, u * 4);
+  return (v < 10 ? v.toFixed(2) : v < 100 ? v.toFixed(1) : Math.floor(v)) + UNITS[u];
+}
+const fmtTime = s => s >= 3600 ? `${Math.floor(s / 3600)}시간 ${Math.floor(s % 3600 / 60)}분` : s >= 60 ? `${Math.floor(s / 60)}분 ${Math.floor(s % 60)}초` : `${Math.floor(s)}초`;
+const dayKey = (t = Date.now()) => { const d = new Date(t); return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate(); };
+
+/* =====================================================================
+   상태 / 저장
+   ===================================================================== */
+const SAVE_KEY = 'nyang_save_v1';
+function fresh() {
+  return {
+    gold: 0, gems: 100, souls: 0, stage: 1, wave: 1, maxStage: 1, farm: false, autoBoss: true,
+    lv: { atk: 0, spd: 0, crit: 0, critd: 0, gold: 0 },
+    inv: {}, equip: -1, cleared: {},
+    buffs: { atk: 0, gold: 0, spd: 0 },
+    adGems: { day: 0, n: 0 },
+    att: { last: 0, streak: 0 },
+    q: { day: 0, kills: 0, gacha: 0, ads: 0, boss: 0, claimed: {} },
+    stats: { kills: 0, rebirths: 0, pulls: 0, playSec: 0 },
+    premium: { noAds: false, starter: false, monthlyUntil: 0, monthlyLast: 0 },
+    last: Date.now(), created: Date.now(),
+  };
+}
+let S;
+try { S = Object.assign(fresh(), JSON.parse(localStorage.getItem(SAVE_KEY) || 'null') || {}); } catch { S = fresh(); }
+function save() { S.last = Date.now(); try { localStorage.setItem(SAVE_KEY, JSON.stringify(S)); } catch {} }
+
+/* =====================================================================
+   전투 수치
+   ===================================================================== */
+const now = () => Date.now();
+const buffOn = k => S.premium.noAds || S.buffs[k] > now();
+function ownedSum() { let s = 0; for (const i in S.inv) if (S.inv[i] > 0) s += B.ownedBonus(+i); return s; }
+function atkMult() { return B.soulMult(S.souls) * B.equipMult(S.equip) * (1 + ownedSum()) * (buffOn('atk') ? 2 : 1); }
+function atk() { return B.baseAtk(S.lv.atk) * atkMult(); }
+function aps() { return (1 + 0.04 * S.lv.spd) * (buffOn('spd') ? 1.5 : 1); }
+function critC() { return (5 + S.lv.crit) / 100; }
+function critD() { return 1.5 + S.lv.critd * 0.12; }
+function goldMult() { return (1 + 0.1 * S.lv.gold) * B.soulMult(S.souls) * (buffOn('gold') ? 2 : 1); }
+function dps() { return atk() * aps() * (1 + critC() * (critD() - 1)); }
+
+/* =====================================================================
+   전투 루프 (캔버스)
+   ===================================================================== */
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+let W = 0, H = 0, DPR = 1;
+function resize() { DPR = Math.min(window.devicePixelRatio || 1, 2); const r = cv.getBoundingClientRect(); W = r.width; H = r.height; cv.width = W * DPR; cv.height = H * DPR; ctx.setTransform(DPR, 0, 0, DPR, 0, 0); }
+addEventListener('resize', resize);
+
+const theme = () => THEMES[Math.floor((S.stage - 1) / 5) % THEMES.length];
+let mob = null, atkTimer = 0, skillTimer = 0, bossLeft = 0, lunge = 0, shake = 0, flash = 0;
+const fx = [];   // 파티클 / 데미지 텍스트
+function spawn() {
+  const th = theme(), boss = S.wave === 10 && !S.farm;
+  const w = boss ? 10 : S.wave;
+  const hp = B.hp(S.stage, w);
+  mob = { boss, hp, max: hp, x: W + 40, e: boss ? th.boss : th.mobs[(S.stage * 7 + S.wave) % th.mobs.length], hit: 0, dead: 0, w };
+  if (boss) bossLeft = B.bossTime;
+  atkTimer = 1 / aps();  // 도착 즉시 첫 공격
+}
+function hitMob(mult = 1, skill = false) {
+  if (!mob || mob.dead || mob.x > W * 0.72 + 2) return;
+  const crit = Math.random() < critC();
+  const d = atk() * mult * (crit ? critD() : 1);
+  mob.hp -= d; mob.hit = 0.12; lunge = 0.12;
+  fx.push({ t: 'num', x: W * 0.68 + (Math.random() - .5) * 30, y: H * 0.45, v: d, crit: crit || skill, life: 0.9, skill });
+  fx.push({ t: 'slash', x: W * 0.7, y: H * 0.58, life: 0.18, a: Math.random() * Math.PI, big: skill });
+  if (crit) shake = Math.max(shake, 0.12);
+  if (mob.hp <= 0) kill();
+}
+function kill() {
+  const g = B.goldDrop(S.stage, mob.w) * goldMult();
+  S.gold += g; S.stats.kills++; S.q.kills++;
+  mob.dead = 0.25;
+  for (let i = 0; i < 10; i++) fx.push({ t: 'p', x: W * 0.7, y: H * 0.6, vx: (Math.random() - .3) * 220, vy: -Math.random() * 260, life: 0.6, c: theme().sky[1] });
+  fx.push({ t: 'coin', x: W * 0.7, y: H * 0.55, life: 0.7, v: g });
+  if (mob.boss) {
+    S.q.boss++;
+    const first = !S.cleared[S.stage];
+    const gems = first ? 10 + Math.floor(S.stage / 2) : 1;
+    S.cleared[S.stage] = 1; S.gems += gems;
+    toast(first ? `🎉 ${S.stage}스테이지 첫 클리어! 💎+${gems}` : `보스 처치! 💎+${gems}`);
+    S.stage++; S.wave = 1; S.maxStage = Math.max(S.maxStage, S.stage); flash = 0.4;
+    if (S.stage % 5 === 1) toast(`새 지역: ${theme().n}`);
+    vibrate(40);
+  } else if (S.farm) {
+    S.wave = 9;
+    if (S.autoBoss && dps() * B.bossTime > B.hp(S.stage, 10) * 1.05) { S.farm = false; S.wave = 10; }
+  } else S.wave++;
+  renderTop();
+}
+function bossFail() {
+  toast('보스를 놓쳤어요… 더 강해져서 다시 도전!');
+  S.farm = true; S.wave = 9; mob = null; renderTop();
+}
+
+let lastT = performance.now(), acc = 0;
+function loop(t) {
+  let dt = Math.min((t - lastT) / 1000, 0.1); lastT = t;
+  S.stats.playSec += dt;
+  if (!mob || (mob.dead && (mob.dead -= dt) <= 0)) spawn();
+  if (mob && !mob.dead) {
+    const tx = W * 0.72; if (mob.x > tx) mob.x = Math.max(tx, mob.x - dt * W * 1.6);
+    if (mob.hit > 0) mob.hit -= dt;
+    if (mob.boss) { bossLeft -= dt; if (bossLeft <= 0) bossFail(); }
+  }
+  atkTimer += dt; const per = 1 / aps();
+  const ready = mob && !mob.dead && mob.x <= W * 0.72 + 2;
+  if (ready) { let n = 0; while (atkTimer >= per && n < 20 && mob && !mob.dead) { atkTimer -= per; hitMob(); n++; } }
+  else atkTimer = Math.min(atkTimer, per);
+  skillTimer += dt; if (skillTimer >= 8) { skillTimer = 0; hitMob(8, true); flash = 0.15; }
+  if (lunge > 0) lunge -= dt; if (shake > 0) shake -= dt; if (flash > 0) flash -= dt;
+  draw(dt);
+  acc += dt; if (acc > 0.25) { acc = 0; renderLive(); }
+  requestAnimationFrame(loop);
+}
+
+function draw(dt) {
+  const th = theme();
+  ctx.save();
+  if (shake > 0) ctx.translate((Math.random() - .5) * 6, (Math.random() - .5) * 6);
+  const g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, th.sky[0]); g.addColorStop(1, th.sky[1]);
+  ctx.fillStyle = g; ctx.fillRect(-10, -10, W + 20, H + 20);
+  // 먼 산
+  const t = performance.now() / 1000;
+  ctx.fillStyle = th.hill; ctx.globalAlpha = 0.5; ctx.beginPath(); ctx.moveTo(0, H * 0.7);
+  for (let x = 0; x <= W; x += 10) ctx.lineTo(x, H * 0.55 + Math.sin((x + t * 12) / 60) * 18 + Math.sin((x + t * 12) / 23) * 6);
+  ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.fill(); ctx.globalAlpha = 1;
+  ctx.fillStyle = th.hill; ctx.fillRect(0, H * 0.74, W, H);
+  ctx.fillStyle = 'rgba(255,255,255,.08)'; for (let x = -((t * 80) % 40); x < W; x += 40) ctx.fillRect(x, H * 0.8, 18, 3);
+
+  // 고양이 검객
+  const hx = W * 0.25 + (lunge > 0 ? 18 : 0), hy = H * 0.7 + Math.sin(t * 6) * 2;
+  ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.beginPath(); ctx.ellipse(W * 0.25, H * 0.75, 30, 7, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.font = `${Math.min(64, H * 0.28)}px serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+  ctx.fillText('🐱', hx, hy);
+  // 검
+  const sw = lunge > 0 ? -0.9 : 0.5 + Math.sin(t * 3) * 0.05, wi = S.equip < 0 ? 0 : Math.floor(S.equip / 4);
+  ctx.save(); ctx.translate(hx + 22, hy - 26); ctx.rotate(sw);
+  ctx.strokeStyle = TIERS[wi].c; ctx.lineWidth = 5; ctx.lineCap = 'round'; ctx.shadowColor = TIERS[wi].c; ctx.shadowBlur = S.equip >= 8 ? 12 : 0;
+  ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, -44); ctx.stroke(); ctx.shadowBlur = 0;
+  ctx.strokeStyle = '#6b4a2a'; ctx.lineWidth = 6; ctx.beginPath(); ctx.moveTo(-8, 0); ctx.lineTo(8, 0); ctx.stroke(); ctx.restore();
+
+  // 요괴
+  if (mob) {
+    const size = (mob.boss ? 1.5 : 1) * Math.min(60, H * 0.27);
+    const alpha = mob.dead ? Math.max(mob.dead / 0.25, 0) : 1;
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.beginPath(); ctx.ellipse(mob.x, H * 0.75, size * 0.5, 7, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.save(); ctx.translate(mob.x + (mob.hit > 0 ? 5 : 0), H * 0.72 + Math.sin(t * 4 + 1) * 3); ctx.scale(-1, 1);
+    if (mob.hit > 0) ctx.filter = 'brightness(2.2)';
+    ctx.font = `${size}px serif`; ctx.fillText(mob.e, 0, 0); ctx.filter = 'none'; ctx.restore();
+    if (!mob.dead) {
+      const bw = mob.boss ? 120 : 70, bx = mob.x - bw / 2, by = H * 0.72 - size - 14;
+      ctx.fillStyle = 'rgba(0,0,0,.5)'; ctx.fillRect(bx, by, bw, 7);
+      ctx.fillStyle = mob.boss ? '#ff5d6c' : '#4fd18b'; ctx.fillRect(bx, by, bw * Math.max(mob.hp / mob.max, 0), 7);
+      if (mob.boss) { ctx.font = 'bold 11px sans-serif'; ctx.fillStyle = '#fff'; ctx.fillText('BOSS', mob.x, by - 2); }
+    }
+    ctx.globalAlpha = 1;
+  }
+  // 이펙트
+  for (let i = fx.length - 1; i >= 0; i--) {
+    const f = fx[i]; f.life -= dt; if (f.life <= 0) { fx.splice(i, 1); continue; }
+    if (f.t === 'num') {
+      f.y -= dt * 50; ctx.globalAlpha = Math.min(f.life * 2, 1);
+      ctx.font = `900 ${f.skill ? 24 : f.crit ? 20 : 15}px sans-serif`; ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,.6)';
+      ctx.fillStyle = f.skill ? '#6fe3ff' : f.crit ? '#ffcf4a' : '#fff';
+      const s = (f.skill ? '⚡' : '') + fmt(f.v) + (f.crit && !f.skill ? '!' : '');
+      ctx.strokeText(s, f.x, f.y); ctx.fillText(s, f.x, f.y); ctx.globalAlpha = 1;
+    } else if (f.t === 'slash') {
+      ctx.save(); ctx.translate(f.x, f.y); ctx.rotate(f.a); ctx.globalAlpha = f.life / 0.18;
+      ctx.strokeStyle = f.big ? '#6fe3ff' : '#fff'; ctx.lineWidth = f.big ? 6 : 3;
+      ctx.beginPath(); ctx.arc(0, 0, f.big ? 46 : 30, -0.9, 0.9); ctx.stroke(); ctx.restore(); ctx.globalAlpha = 1;
+    } else if (f.t === 'p') {
+      f.x += f.vx * dt; f.y += f.vy * dt; f.vy += 600 * dt; ctx.globalAlpha = f.life / 0.6;
+      ctx.fillStyle = f.c; ctx.fillRect(f.x, f.y, 5, 5); ctx.globalAlpha = 1;
+    } else if (f.t === 'coin') {
+      const k = 1 - f.life / 0.7; ctx.globalAlpha = 1 - k;
+      ctx.font = '900 14px sans-serif'; ctx.fillStyle = '#ffcf4a'; ctx.fillText('🪙+' + fmt(f.v), f.x, f.y - k * 50); ctx.globalAlpha = 1;
+    }
+  }
+  if (flash > 0) { ctx.fillStyle = `rgba(255,255,255,${flash})`; ctx.fillRect(0, 0, W, H); }
+  ctx.restore();
+}
+
+/* =====================================================================
+   UI
+   ===================================================================== */
+const $ = id => document.getElementById(id);
+let tab = 'grow', buyN = 1;
+function renderTop() {
+  $('gold').textContent = fmt(S.gold); $('gems').textContent = fmt(S.gems); $('souls').textContent = fmt(S.souls);
+  $('stageName').textContent = `${theme().n} ${S.stage}-${S.farm ? '9' : S.wave}`;
+  let h = ''; for (let i = 1; i <= 10; i++) h += `<span class="${i < S.wave || (S.farm && i < 10) ? 'on' : ''}${i === 10 ? ' boss' : ''}"></span>`;
+  $('waves').innerHTML = h;
+  $('bossBtn').style.display = S.farm ? 'block' : 'none';
+}
+function renderLive() {
+  $('gold').textContent = fmt(S.gold); $('gems').textContent = fmt(S.gems);
+  $('dps').textContent = 'DPS ' + fmt(dps());
+  const bt = $('bossTimer');
+  if (mob && mob.boss && !mob.dead) { bt.style.display = 'block'; bt.textContent = '⏱ ' + Math.max(bossLeft, 0).toFixed(1); } else bt.style.display = 'none';
+  document.querySelectorAll('.buff[data-buff]').forEach(b => {
+    const k = b.dataset.buff, on = buffOn(k); b.classList.toggle('on', on);
+    b.querySelector('.bt').textContent = S.premium.noAds ? '영구' : on ? fmtTime((S.buffs[k] - now()) / 1000) : '30분';
+    b.querySelector('.tv').style.display = on ? 'none' : '';
+  });
+  resetDaily();
+  $('gemAdLeft').textContent = `${5 - S.adGems.n}회`;
+  $('questDot').classList.toggle('show', questReady() || S.att.last !== dayKey());
+  if (tab === 'grow') refreshGrowButtons();
+  if (tab === 'quest') renderPanel();
+}
+function refreshGrowButtons() {
+  document.querySelectorAll('[data-up]').forEach(b => {
+    const k = b.dataset.up, { n, c } = bulk(k); b.disabled = n === 0 || S.gold < c;
+    b.innerHTML = S.lv[k] >= B.ups[k].max ? 'MAX' : `🪙${fmt(c)}<small>+${n || buyN === 'max' ? Math.max(n, 1) : buyN} 레벨</small>`;
+  });
+}
+function bulk(k) {
+  const u = B.ups[k]; let L = S.lv[k], c = 0, n = 0;
+  const target = buyN === 'max' ? 1e4 : buyN;
+  while (n < target && L < u.max) { const cc = B.cost(k, L); if (buyN === 'max' && c + cc > S.gold) break; c += cc; L++; n++; }
+  if (buyN === 'max' && n === 0 && S.lv[k] < u.max) c = B.cost(k, S.lv[k]);
+  return { n, c };
+}
+function upgrade(k) {
+  const { n, c } = bulk(k); if (!n || S.gold < c) return;
+  S.gold -= c; S.lv[k] += n; renderPanel(); renderTop(); vibrate(8);
+}
+
+function renderPanel() {
+  const p = $('panel'); const sc = p.scrollTop;
+  if (tab === 'grow') {
+    p.innerHTML = `<div class="multi">${[1, 10, 100, 'max'].map(n => `<button data-n="${n}" class="${buyN == n ? 'on' : ''}">x${n === 'max' ? 'MAX' : n}</button>`).join('')}</div>` +
+      Object.entries(B.ups).map(([k, u]) => `<div class="row"><div class="ic">${u.ic}</div><div class="info"><div class="t">${u.name}<small>Lv.${S.lv[k]}</small></div><div class="d">${u.desc(S.lv[k])}</div></div><button class="buy" data-up="${k}"></button></div>`).join('') +
+      `<div class="sec">현재 능력치</div><div class="card"><p>공격력 <b style="color:#fff">${fmt(atk())}</b> · 초당 ${aps().toFixed(2)}회 · 치명 ${Math.round(critC() * 100)}% / ${Math.round(critD() * 100)}%<br>장비·보유 효과 x${(B.equipMult(S.equip) * (1 + ownedSum())).toFixed(2)} · 환생 x${B.soulMult(S.souls).toFixed(2)} · 골드 x${goldMult().toFixed(2)}<br>⚡ 필살 베기: 8초마다 공격력 800% 피해</p></div>`;
+    p.querySelectorAll('[data-n]').forEach(b => b.onclick = () => { buyN = b.dataset.n === 'max' ? 'max' : +b.dataset.n; renderPanel(); });
+    p.querySelectorAll('[data-up]').forEach(b => b.onclick = () => upgrade(b.dataset.up));
+    refreshGrowButtons();
+  } else if (tab === 'gear') {
+    const mergeable = Object.entries(S.inv).some(([i, c]) => c >= 5 && +i < 23);
+    p.innerHTML = `<div class="card"><h3>🎁 무기 소환</h3><p>보유만 해도 공격력 영구 증가! 같은 무기 5개 → 상위 무기 1개로 합성.<br><span style="font-size:11px">확률: ${TIERS.map(t => `${t.n} ${(t.p * 100).toFixed(t.p < 0.01 ? 2 : 1)}%`).join(' · ')}</span></p>
+      <div class="gacha-btns"><button class="buy gem" id="g1">1회<small>💎 50</small></button><button class="buy gem" id="g11">11회<small>💎 500</small></button></div></div>
+      <div class="sec" style="display:flex;justify-content:space-between;align-items:center">보유 무기 (보유 효과 +${Math.round(ownedSum() * 100)}%)<button class="buy green" id="mergeAll" style="min-width:auto;padding:6px 10px" ${mergeable ? '' : 'disabled'}>일괄 합성</button></div>
+      <div class="wgrid">${WNAME.map((nm, i) => wcell(i)).join('')}</div><div class="sec">무기를 눌러 장착 (장착 효과 x배)</div><div class="card" id="wInfo"><p>${S.equip >= 0 ? `장착 중: <b style="color:#fff">${WNAME[S.equip]}</b> — 공격력 x${B.equipMult(S.equip).toFixed(2)}` : '장착한 무기가 없어요'}</p></div>`;
+    $('g1').onclick = () => gacha(1); $('g11').onclick = () => gacha(11);
+    $('mergeAll').onclick = mergeAll;
+    p.querySelectorAll('.w[data-i]').forEach(el => el.onclick = () => { const i = +el.dataset.i; if (!S.inv[i]) return;
+      S.equip = i; renderPanel(); toast(`${WNAME[i]} 장착!`); });
+  } else if (tab === 'soul') {
+    const gain = B.soulsFor(S.maxStage);
+    p.innerHTML = `<div class="card" style="text-align:center"><h3>🔮 환생</h3><p>스테이지·골드·성장 레벨을 초기화하고<br><b style="color:var(--soul)">영혼석</b>을 얻어요. 영혼석 1개당 공격력·골드 <b>+10%</b> 영구 증가.</p>
+      <div style="font-size:13px;margin-top:12px;color:var(--muted)">최고 스테이지 ${S.maxStage} → 획득 예정</div>
+      <div style="font-size:32px;font-weight:900;color:var(--soul);margin:6px 0">🔮 ${fmt(gain)}</div>
+      <p style="font-size:12px">${S.maxStage < 15 ? '15 스테이지부터 환생할 수 있어요' : `환생 후 배율 x${B.soulMult(S.souls).toFixed(2)} → x${B.soulMult(S.souls + gain).toFixed(2)}`}</p>
+      <div class="gacha-btns"><button class="buy purple" id="rebirth" ${gain ? '' : 'disabled'}>환생하기</button><button class="buy" id="rebirthAd" ${gain ? '' : 'disabled'}>📺 광고 보고 x2 환생</button></div></div>
+      <div class="card"><p>무기, 보석, 영혼석은 유지됩니다. 막히는 구간에서 환생하면 이전보다 훨씬 빠르게 올라가요.<br>누적 환생 ${S.stats.rebirths}회 · 보유 영혼석 ${fmt(S.souls)}</p></div>
+      <div class="card"><h3>⚙️ 설정</h3><p style="display:flex;justify-content:space-between;align-items:center">자동 보스 도전 <button class="buy ${S.autoBoss ? 'green' : ''}" id="autoBoss" style="min-width:64px">${S.autoBoss ? 'ON' : 'OFF'}</button></p></div>`;
+    $('rebirth').onclick = () => rebirth(1); $('rebirthAd').onclick = () => rewarded('rebirth', () => rebirth(2));
+    $('autoBoss').onclick = () => { S.autoBoss = !S.autoBoss; renderPanel(); };
+  } else if (tab === 'quest') {
+    const today = dayKey(), canAtt = S.att.last !== today, day = (canAtt ? S.att.streak : S.att.streak - 1) % 7;
+    const QS = quests();
+    p.innerHTML = `<div class="card"><h3>📅 출석 보상</h3><p>매일 접속하고 보석을 받으세요!</p><div class="att">${ATT.map((g, i) => `<div class="${i < day || (i === day && !canAtt) ? 'done' : ''} ${i === day ? 'today' : ''}">${i + 1}일<b>💎${g}</b></div>`).join('')}</div>
+      <div class="gacha-btns"><button class="buy gem" id="attBtn" ${canAtt ? '' : 'disabled'}>${canAtt ? '받기' : '내일 다시'}</button></div></div>
+      <div class="sec">오늘의 임무</div>` + QS.map(q => { const v = Math.min(q.v(), q.goal), done = v >= q.goal, cl = S.q.claimed[q.id];
+        return `<div class="row"><div class="ic">${q.ic}</div><div class="info"><div class="t">${q.name}</div><div class="d">${fmt(v)} / ${fmt(q.goal)}</div><div class="prog"><i style="width:${v / q.goal * 100}%"></i></div></div><button class="buy gem" data-q="${q.id}" ${done && !cl ? '' : 'disabled'}>${cl ? '완료' : '💎' + q.r}</button></div>`; }).join('');
+    if ($('attBtn')) $('attBtn').onclick = attend;
+    p.querySelectorAll('[data-q]').forEach(b => b.onclick = () => { const q = QS.find(x => x.id === b.dataset.q); S.q.claimed[q.id] = 1; S.gems += q.r; toast(`💎 +${q.r}`); renderPanel(); renderTop(); });
+  } else if (tab === 'shop') {
+    p.innerHTML = SHOP.map(s => `<div class="row"><div class="ic">${s.ic}</div><div class="info"><div class="t">${s.name}${s.tag ? `<small style="color:var(--red)">${s.tag}</small>` : ''}</div><div class="d">${s.desc}</div></div>
+      <button class="buy ${s.gem ? 'gem' : 'green'}" data-sku="${s.id}" ${s.done && s.done() ? 'disabled' : ''}>${s.done && s.done() ? '구매 완료' : s.price}</button></div>`).join('') +
+      `<div class="card"><p style="font-size:11px">결제는 Google Play 결제로 처리됩니다. 테스트 빌드에서는 실제 결제 없이 지급돼요.</p></div>`;
+    p.querySelectorAll('[data-sku]').forEach(b => b.onclick = () => purchase(b.dataset.sku));
+  }
+  p.scrollTop = sc;
+}
+function wcell(i, fresh) {
+  const t = Math.floor(i / 4), c = S.inv[i] || 0;
+  return `<div class="w ${c || fresh ? '' : 'locked'} ${S.equip === i && !fresh ? 'eq' : ''}" data-i="${fresh ? '' : i}" style="border-color:${fresh || S.equip === i ? TIERS[t].c : 'transparent'}">
+    <span class="gr" style="color:${TIERS[t].c}">${TIERS[t].n}${(i % 4) + 1}</span>${WICON[t]}${fresh ? '' : `<span class="bar"><i style="width:${Math.min(c / 5, 1) * 100}%"></i></span><span class="cnt">${c ? c + '/5' : ''}</span>`}</div>`;
+}
+
+/* ---------------- 소환 ---------------- */
+function roll() {
+  let r = Math.random(), t = 0;
+  for (let i = TIERS.length - 1; i >= 0; i--) { if (r < TIERS[i].p) { t = i; break; } r -= TIERS[i].p; }
+  const g = Math.random(), sub = g < 0.45 ? 0 : g < 0.75 ? 1 : g < 0.93 ? 2 : 3;
+  return t * 4 + sub;
+}
+function gacha(n) {
+  const cost = n === 1 ? 50 : 500; if (S.gems < cost) { toast('보석이 부족해요'); openShopHint(); return; }
+  S.gems -= cost; S.q.gacha += n; S.stats.pulls += n;
+  const got = []; for (let i = 0; i < n; i++) { const w = roll(); got.push(w); S.inv[w] = (S.inv[w] || 0) + 1; }
+  const best = Math.max(...got); if (best > S.equip) S.equip = best;
+  modal(`<h2>소환 결과</h2><div class="pulls">${got.map((w, k) => wcell(w, true).replace('class="w', `style="animation-delay:${k * 60}ms" class="w`)).join('')}</div>
+    <p>${got.map(w => WNAME[w]).filter((v, i, a) => a.indexOf(v) === i).slice(0, 4).join(', ')}${got.length > 4 ? ' 외' : ''}</p>
+    <div class="btns"><button class="ghost" data-close>확인</button><button class="buy gem" id="again">한 번 더 (💎${cost})</button></div>`);
+  $('again').onclick = () => { closeModal(); gacha(n); };
+  if (best >= 12) vibrate([30, 40, 80]);
+  renderPanel(); renderTop(); save();
+}
+function mergeAll() {
+  let made = 0;
+  for (let i = 0; i < 23; i++) while ((S.inv[i] || 0) >= 5) { S.inv[i] -= 4; S.inv[i + 1] = (S.inv[i + 1] || 0) + 1; made++; }
+  let best = -1; for (const i in S.inv) if (S.inv[i] > 0) best = Math.max(best, +i);
+  if (best > S.equip) S.equip = best;
+  toast(`합성 ${made}회 완료!`); renderPanel(); save();
+}
+
+/* ---------------- 환생 ---------------- */
+function rebirth(mult) {
+  const gain = B.soulsFor(S.maxStage) * mult; if (!gain) return;
+  S.souls += gain; S.stats.rebirths++;
+  Object.assign(S, { gold: 0, stage: 1, wave: 1, maxStage: 1, farm: false, lv: { atk: 0, spd: 0, crit: 0, critd: 0, gold: 0 } });
+  mob = null; flash = 0.6; toast(`🔮 영혼석 +${fmt(gain)}! 더 강해져서 돌아왔다!`);
+  renderTop(); renderPanel(); save();
+}
+
+/* ---------------- 출석 / 임무 ---------------- */
+const ATT = [50, 80, 100, 150, 200, 250, 500];
+function resetDaily() {
+  const d = dayKey();
+  if (S.q.day !== d) S.q = { day: d, kills: 0, gacha: 0, ads: 0, boss: 0, claimed: {} };
+  if (S.adGems.day !== d) S.adGems = { day: d, n: 0 };
+  if (S.premium.monthlyUntil > now() && S.premium.monthlyLast !== d) { S.premium.monthlyLast = d; S.gems += 100; toast('월정액 보상 💎+100'); }
+}
+function quests() { return [
+  { id: 'k', ic: '⚔️', name: '요괴 300마리 처치', goal: 300, r: 50, v: () => S.q.kills },
+  { id: 'b', ic: '👹', name: '보스 3마리 처치', goal: 3, r: 50, v: () => S.q.boss },
+  { id: 'g', ic: '🎁', name: '무기 소환 10회', goal: 10, r: 80, v: () => S.q.gacha },
+  { id: 'a', ic: '📺', name: '광고 보상 3회 받기', goal: 3, r: 100, v: () => S.q.ads },
+]; }
+function questReady() { return quests().some(q => q.v() >= q.goal && !S.q.claimed[q.id]); }
+function attend() {
+  const d = dayKey(), y = dayKey(now() - 864e5);
+  S.att.streak = S.att.last === y ? S.att.streak + 1 : 1; S.att.last = d;
+  const g = ATT[(S.att.streak - 1) % 7]; S.gems += g; toast(`출석 ${S.att.streak}일차! 💎+${g}`); renderPanel(); renderTop(); save();
+}
+
+/* =====================================================================
+   광고 (AdMob 보상형/전면) — 실제 SDK 미연결 시 테스트 광고 표시
+   ===================================================================== */
+function rewarded(placement, onReward) {
+  if (S.premium.noAds) { onReward(); S.q.ads++; return; }
+  const done = () => { S.q.ads++; onReward(); save(); };
+  // Capacitor + @capacitor-community/admob 연결 시
+  if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.AdMob) {
+    const A = window.Capacitor.Plugins.AdMob;
+    A.prepareRewardVideoAd({ adId: AD_IDS.rewarded }).then(() => A.showRewardVideoAd()).then(done).catch(() => toast('광고를 불러오지 못했어요'));
+    return;
+  }
+  let s = 5; modal(`<p>광고 (테스트 모드)</p><div class="ad-box" id="adc">${s}</div><p style="font-size:11px">앱 빌드에서는 AdMob 보상형 광고가 재생됩니다</p>`, true);
+  const t = setInterval(() => { s--; const e = $('adc'); if (e) e.textContent = s > 0 ? s : '✓'; if (s <= 0) { clearInterval(t); setTimeout(() => { closeModal(); done(); }, 300); } }, 1000);
+}
+const AD_IDS = { rewarded: 'ca-app-pub-3940256099942544/5224354917' }; // 구글 공식 테스트 ID — 출시 전 교체
+document.querySelectorAll('.buff[data-buff]').forEach(b => b.onclick = () => {
+  const k = b.dataset.buff; if (buffOn(k) && S.buffs[k] - now() > 25 * 60e3) return toast('이미 적용 중이에요');
+  rewarded('buff_' + k, () => { S.buffs[k] = Math.max(S.buffs[k], now()) + 30 * 60e3; toast(`${b.querySelector('b').textContent} 30분 적용!`); renderLive(); });
+});
+$('gemAd').onclick = () => { resetDaily(); if (S.adGems.n >= 5) return toast('오늘은 모두 받았어요. 내일 또 만나요!');
+  rewarded('gems', () => { S.adGems.n++; S.gems += 50; toast('💎 +50'); renderTop(); }); };
+
+/* =====================================================================
+   인앱 결제 (Google Play Billing) — 테스트 빌드는 즉시 지급
+   ===================================================================== */
+const SHOP = [
+  { id: 'starter', ic: '🎒', name: '초보 냥검객 패키지', tag: '1회 한정 · 90% 할인', price: '₩1,200', desc: '💎 1,500 + 영웅 무기 1개 + 골드 x2 영구', done: () => S.premium.starter,
+    give: () => { S.premium.starter = true; S.gems += 1500; S.inv[12] = (S.inv[12] || 0) + 1; if (S.equip < 12) S.equip = 12; } },
+  { id: 'noads', ic: '🚫', name: '광고 제거', tag: '인기', price: '₩5,900', desc: '모든 광고 없이 버프 영구 적용 + 광고 보상 즉시 지급', done: () => S.premium.noAds,
+    give: () => { S.premium.noAds = true; } },
+  { id: 'monthly', ic: '📆', name: '월간 보석 정기권', tag: '최고 효율', price: '₩4,900', desc: '즉시 💎 500 + 30일간 매일 💎 100 (총 3,500)',
+    give: () => { S.gems += 500; S.premium.monthlyUntil = Math.max(S.premium.monthlyUntil, now()) + 30 * 864e5; S.premium.monthlyLast = 0; resetDaily(); } },
+  { id: 'gem1', ic: '💎', name: '보석 한 줌', price: '₩1,200', desc: '💎 300', give: () => { S.gems += 300; } },
+  { id: 'gem2', ic: '💰', name: '보석 주머니', tag: '+20%', price: '₩5,900', desc: '💎 1,800', give: () => { S.gems += 1800; } },
+  { id: 'gem3', ic: '👑', name: '보석 상자', tag: '+50%', price: '₩29,000', desc: '💎 11,000', give: () => { S.gems += 11000; } },
+];
+function purchase(id) {
+  const s = SHOP.find(x => x.id === id); if (!s || (s.done && s.done())) return;
+  // 실제 앱: cordova-plugin-purchase (CdvPurchase.store) 로 상품 id 결제 → 승인 콜백에서 s.give()
+  if (window.CdvPurchase) { window.CdvPurchase.store.get(id)?.getOffer()?.order(); return; }
+  modal(`<h2>${s.ic} ${s.name}</h2><p>${s.desc}</p><div class="big" style="color:var(--green)">${s.price}</div><p style="font-size:11px">테스트 빌드: 실제 결제되지 않습니다</p>
+    <div class="btns"><button class="ghost" data-close>취소</button><button class="buy green" id="payOk">구매</button></div>`);
+  $('payOk').onclick = () => { s.give(); closeModal(); toast('구매 완료! 감사합니다 🐱'); renderPanel(); renderTop(); save(); };
+}
+function openShopHint() { setTab('shop'); }
+
+/* =====================================================================
+   오프라인 보상
+   ===================================================================== */
+function offlineReward() {
+  const away = Math.min((now() - S.last) / 1000, 12 * 3600);
+  if (away < 60) return;
+  // 현재 스테이지 일반 몹 처치 속도 기준 (보스 제외)
+  const w = 5, kps = Math.min(dps() / B.hp(S.stage, w), aps());
+  const gold = kps * away * B.goldDrop(S.stage, w) * goldMult() * 0.5;
+  modal(`<h2>😺 다녀오셨어요!</h2><p>${fmtTime(away)} 동안 냥검객이 요괴를 베었어요${away >= 12 * 3600 - 1 ? ' (최대 12시간)' : ''}</p><div class="big">🪙 ${fmt(gold)}</div>
+    <div class="btns"><button class="ghost" id="offOk">받기</button><button class="buy" id="offAd">📺 2배 받기</button></div>`, true);
+  $('offOk').onclick = () => { S.gold += gold; closeModal(); renderTop(); save(); };
+  $('offAd').onclick = () => { closeModal(); rewarded('offline', () => { S.gold += gold * 2; toast(`🪙 +${fmt(gold * 2)}`); renderTop(); }); };
+}
+
+/* =====================================================================
+   공통
+   ===================================================================== */
+function modal(html, locked) { $('sheet').innerHTML = html; $('modal').classList.add('show'); $('modal').dataset.locked = locked ? 1 : '';
+  $('sheet').querySelectorAll('[data-close]').forEach(b => b.onclick = closeModal); }
+function closeModal() { $('modal').classList.remove('show'); }
+$('modal').onclick = e => { if (e.target.id === 'modal' && !$('modal').dataset.locked) closeModal(); };
+let tt; function toast(m) { const t = $('toast'); t.textContent = m; t.classList.add('show'); clearTimeout(tt); tt = setTimeout(() => t.classList.remove('show'), 1800); }
+function vibrate(p) { try { navigator.vibrate && navigator.vibrate(p); } catch {} }
+function setTab(t) { tab = t; document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b.dataset.tab === t)); $('panel').scrollTop = 0; renderPanel(); }
+document.querySelectorAll('.tab').forEach(b => b.onclick = () => setTab(b.dataset.tab));
+$('bossBtn').onclick = () => { S.farm = false; S.wave = 10; mob = null; renderTop(); };
+
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) save();
+  else { offlineReward(); lastT = performance.now(); }
+});
+setInterval(save, 5000);
+addEventListener('pagehide', save);
+
+/* =====================================================================
+   네이티브(안드로이드) 초기화 — 웹에서는 건너뜀
+   ===================================================================== */
+document.addEventListener('deviceready', () => {
+  const AdMob = window.Capacitor?.Plugins?.AdMob;
+  if (AdMob) AdMob.initialize({ initializeForTesting: true }).catch(() => {});  // 출시 시 false
+  if (window.CdvPurchase) {
+    const { store, ProductType, Platform } = window.CdvPurchase;
+    store.register(SHOP.map(s => ({ id: s.id, platform: Platform.GOOGLE_PLAY,
+      type: s.id === 'starter' || s.id === 'noads' ? ProductType.NON_CONSUMABLE : ProductType.CONSUMABLE })));
+    store.when().approved(tx => {
+      tx.products.forEach(p => { const s = SHOP.find(x => x.id === p.id); if (s && !(s.done && s.done())) s.give(); });
+      tx.finish(); save(); renderPanel(); renderTop(); toast('구매 완료! 감사합니다 🐱');
+    });
+    store.initialize([Platform.GOOGLE_PLAY]);
+  }
+}, false);
+
+/* 시작 */
+resize(); resetDaily(); renderTop(); renderPanel();
+if (S.stats.kills === 0 && S.stats.playSec < 1) {
+  modal(`<h2>🐱 냥검객 키우기</h2><p>요괴가 들끓는 땅, 작은 고양이 검객이 길을 나섭니다.<br><br>⚔️ 냥검객은 <b>자동으로</b> 싸워요<br>🪙 골드로 능력치를 올리고<br>🎁 보석으로 무기를 소환하세요<br>🔮 막히면 환생해서 더 강해지기!<br><br>앱을 꺼 두어도 계속 성장합니다.</p>
+    <div class="btns"><button class="buy" data-close>모험 시작!</button></div>`);
+} else offlineReward();
+requestAnimationFrame(loop);
+if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
+</script>
+</body>
+</html>

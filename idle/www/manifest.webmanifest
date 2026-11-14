@@ -1,0 +1,11 @@
+{
+  "name": "냥검객 키우기",
+  "short_name": "냥검객",
+  "start_url": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#1b1430",
+  "theme_color": "#1b1430",
+  "lang": "ko",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}
