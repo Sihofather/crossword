@@ -1,0 +1,12 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+body{margin:0;width:1024px;height:500px;overflow:hidden;font-family:'Pretendard','Noto Sans CJK KR','Apple SD Gothic Neo',sans-serif;
+background:radial-gradient(circle at 30% 60%,#ff8a3d 0,#7a3a6a 38%,#1b1430 75%);color:#fff;position:relative}
+h1{position:absolute;right:50px;top:110px;margin:0;font-size:84px;font-weight:900;letter-spacing:-3px;text-shadow:0 6px 0 #1b1430,0 0 30px #ff8a3d}
+p{position:absolute;right:60px;top:250px;margin:0;font-size:34px;font-weight:800;color:#ffcf4a;text-shadow:0 3px 0 #1b1430}
+.tag{position:absolute;right:60px;top:318px;font-size:24px;font-weight:700;background:#ffffff22;padding:8px 18px;border-radius:30px}
+canvas{position:absolute}
+</style></head><body><h1>냥검객 키우기</h1><p>요괴를 베고, 끝없이 강해져라!</p><div class="tag">⚔️ 방치형 RPG · 꺼 둬도 성장</div>
+<script src="../www/art.js"></script><script>
+const put=(k,x,y,s,flip)=>{const c=document.createElement('canvas');c.width=c.height=s;const g=c.getContext('2d');if(flip){g.translate(s,0);g.scale(-1,1);}g.drawImage(ART.sprite(k),0,0,s,s);c.style.left=x+'px';c.style.top=y+'px';document.body.appendChild(c);};
+put('gumiho',210,10,200);put('reaper',0,190,190);put('dragon',300,280,200);put('hero',40,130,320);
+</script></body></html>

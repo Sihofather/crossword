@@ -30,25 +30,24 @@ node balance-sim.js
 - 이후 환생마다 더 멀리 감. 24시간에 약 160~170, 72시간에 약 210~220 스테이지. 영구 정체 구간 없음
 
 ## 구글플레이 출시 순서
-1. **준비물**: Google Play 개발자 계정(1회 $25), AdMob 계정, Android Studio
-2. **빌드**
-   ```
-   npm install
-   npm run android:init      # android/ 프로젝트 생성
-   npm run android:sync
-   npm run android:open      # Android Studio에서 서명된 AAB 빌드
-   ```
-3. **교체할 값**
-   - `capacitor.config.json` → `appId` 를 본인 패키지명으로 (예: `com.본인이름.nyang`)
-   - `www/index.html` → `AD_IDS.rewarded` 를 AdMob에서 만든 보상형 광고 단위 ID로, `initializeForTesting` 을 `false` 로
-   - `android/app/src/main/AndroidManifest.xml` 에 AdMob 앱 ID 메타데이터 추가 (@capacitor-community/admob 문서 참고)
-   - `www/privacy.html` → 문의 이메일 입력 후 웹에 공개 (GitHub Pages 가능). Play Console에 이 URL 등록
-4. **Play Console 인앱 상품 등록** (ID 그대로): `starter`, `noads` (비소모성) / `monthly`, `gem1`, `gem2`, `gem3` (소모성)
-5. **비공개 테스트**: 신규 개인 개발자 계정은 테스터 12명이 14일 이상 테스트해야 프로덕션 출시 가능. 지인·커뮤니티로 테스터를 모으세요.
+이미 준비된 것: 안드로이드 프로젝트(`android/`, targetSdk 36), 런처 아이콘, 업로드 서명 키(저장소에는 올리지 않음), 스토어 그래픽·문구(`store/`), 개인정보처리방침(`www/privacy.html`).
+
+1. **빌드**: Android SDK 가 있는 환경에서 `bash build-android.sh` → `release/nyang-1.0.0.aab`
+   - 서명 키 `release/upload-keystore.jks` + `release/keystore.properties` 가 있어야 함. **이 두 파일을 잃어버리면 업데이트를 올릴 수 없으니 반드시 보관.**
+2. **Play Console**: 앱 만들기 → `store/LISTING.md` 의 문구·설문 답변·인앱 상품 ID 그대로 입력 → AAB 업로드
+3. **광고 수익 연결**: AdMob 에서 앱 등록 후 받은 두 ID로 교체
+   - 앱 ID → `android/app/src/main/AndroidManifest.xml` 의 `APPLICATION_ID`
+   - 보상형 광고 단위 ID → `www/index.html` 의 `AD_IDS.rewarded`, 그리고 `initializeForTesting: true` → `false`
+4. **비공개 테스트**: 신규 개인 개발자 계정은 테스터 12명이 14일 이상 테스트해야 프로덕션 출시 가능
+
+## 다시 만들기
+- 스토어 스크린샷·피처 그래픽: `node store/shots.js`
+- 아이콘(스토어·웹·안드로이드 전 해상도): `node store/make-icons.js`
+- 밸런스 검증: `node balance-sim.js`
 
 ## 1위를 위해 남은 것 (솔직하게)
 게임 완성도만으로 1위가 되지는 않습니다. 순위는 **설치 수와 매출**로 정해지고, 상위권 게임은 대부분 광고 마케팅을 집행합니다.
 - **숏폼 영상**: 데미지 숫자가 폭발하는 장면, 신화 무기 뽑기 장면을 틱톡·릴스·쇼츠에 매일 올리기 (무료 마케팅의 핵심)
-- **아트 교체**: 현재는 이모지 그래픽. 실제 출시 전 캐릭터·요괴 일러스트를 넣으면 전환율이 크게 오름
-- **서버 저장/랭킹**: 현재 저장은 기기 로컬. 기기 변경 시 데이터 유실 → Firebase 등으로 클라우드 저장 추가 권장. 결제 검증도 서버에서 하는 것이 안전
+- **아트**: 냥검객·요괴 25종·무기 24종을 코드로 직접 그린 오리지널 일러스트(`www/art.js`). 전문 일러스트로 바꾸면 전환율이 더 오름
+- **저장**: 기기 로컬 저장 + 저장 코드로 기기 이전 가능(환생 탭). 클라우드 저장·서버 결제 검증은 아직 없음
 - **콘텐츠 업데이트**: 동료(펫), 스킬, 던전, 이벤트를 2주 단위로 추가하면 매출이 유지됨

@@ -7,7 +7,7 @@
 <meta name="description" content="고양이 검객이 요괴를 베며 성장하는 방치형 RPG. 꺼 두어도 강해집니다.">
 <meta name="theme-color" content="#1b1430">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" href="icon.svg">
+<link rel="icon" href="icon-512.png">
 <style>
   :root {
     --bg: #1b1430; --panel: #261d42; --panel2: #31265a; --line: #43367a; --text: #f3eefe; --muted: #a99fcc;
@@ -150,6 +150,7 @@
   <div class="toast" id="toast"></div>
 </div>
 
+<script src="art.js"></script>
 <script>
 'use strict';
 /* =====================================================================
@@ -186,11 +187,11 @@ const WNAME = ['나뭇가지 검', '무쇠 단검', '청동 장검', '강철 도
   '도깨비 방망이', '구미호 꼬리검', '이무기 비늘검', '해태의 뿔', '산신의 지팡이', '용왕 삼지창', '저승사자 낫', '천둥 신검',
   '단군의 검', '금강저', '여의주 검', '하늘 열쇠', '태극 신검', '냥신의 발톱'];
 const THEMES = [
-  { n: '대나무 숲', sky: ['#3d6b4f', '#a7d7a0'], hill: '#24402f', mobs: ['🐗', '🐍', '🦡', '🐺'], boss: '🐻' },
-  { n: '도깨비 고개', sky: ['#3b2a5c', '#9b7fc4'], hill: '#251a3d', mobs: ['👺', '👻', '🦇', '🕷️'], boss: '👹' },
-  { n: '여우 골짜기', sky: ['#7a3a2a', '#f2a65a'], hill: '#4a2218', mobs: ['🦊', '🦝', '🐾', '🍂'], boss: '🦊' },
-  { n: '용궁 해변', sky: ['#1d4e89', '#7fd1e8'], hill: '#123459', mobs: ['🦀', '🐙', '🦈', '🐡'], boss: '🐉' },
-  { n: '저승 길', sky: ['#1a1026', '#5a3b6e'], hill: '#0d0816', mobs: ['💀', '👻', '🧟', '🕯️'], boss: '☠️' },
+  { n: '대나무 숲', sky: ['#3d6b4f', '#a7d7a0'], hill: '#24402f', mobs: ['boar', 'snake', 'badger', 'wolf'], boss: 'bear' },
+  { n: '도깨비 고개', sky: ['#3b2a5c', '#9b7fc4'], hill: '#251a3d', mobs: ['dokkaebi', 'ghost', 'bat', 'spider'], boss: 'bigdok' },
+  { n: '여우 골짜기', sky: ['#7a3a2a', '#f2a65a'], hill: '#4a2218', mobs: ['fox', 'raccoon', 'wisp', 'leaf'], boss: 'gumiho' },
+  { n: '용궁 해변', sky: ['#1d4e89', '#7fd1e8'], hill: '#123459', mobs: ['crab', 'octopus', 'shark', 'puffer'], boss: 'dragon' },
+  { n: '저승 길', sky: ['#1a1026', '#5a3b6e'], hill: '#0d0816', mobs: ['skull', 'spirit', 'zombie', 'candle'], boss: 'reaper' },
 ];
 
 /* =====================================================================
@@ -334,28 +335,32 @@ function draw(dt) {
   ctx.fillStyle = 'rgba(255,255,255,.08)'; for (let x = -((t * 80) % 40); x < W; x += 40) ctx.fillRect(x, H * 0.8, 18, 3);
 
   // 고양이 검객
-  const hx = W * 0.25 + (lunge > 0 ? 18 : 0), hy = H * 0.7 + Math.sin(t * 6) * 2;
-  ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.beginPath(); ctx.ellipse(W * 0.25, H * 0.75, 30, 7, 0, 0, Math.PI * 2); ctx.fill();
-  ctx.font = `${Math.min(64, H * 0.28)}px serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
-  ctx.fillText('🐱', hx, hy);
-  // 검
-  const sw = lunge > 0 ? -0.9 : 0.5 + Math.sin(t * 3) * 0.05, wi = S.equip < 0 ? 0 : Math.floor(S.equip / 4);
-  ctx.save(); ctx.translate(hx + 22, hy - 26); ctx.rotate(sw);
-  ctx.strokeStyle = TIERS[wi].c; ctx.lineWidth = 5; ctx.lineCap = 'round'; ctx.shadowColor = TIERS[wi].c; ctx.shadowBlur = S.equip >= 8 ? 12 : 0;
-  ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, -44); ctx.stroke(); ctx.shadowBlur = 0;
-  ctx.strokeStyle = '#6b4a2a'; ctx.lineWidth = 6; ctx.beginPath(); ctx.moveTo(-8, 0); ctx.lineTo(8, 0); ctx.stroke(); ctx.restore();
+  const HD = Math.min(118, H * 0.5), foot = H * 0.78;
+  const hx = W * 0.24 + (lunge > 0 ? 22 : 0), bob = Math.sin(t * 6) * 2;
+  ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.beginPath(); ctx.ellipse(W * 0.24, foot - 4, HD * 0.32, 7, 0, 0, Math.PI * 2); ctx.fill();
+  // 검 (몸 뒤)
+  const sw = lunge > 0 ? 1.9 : 0.45 + Math.sin(t * 3) * 0.05, wi = S.equip < 0 ? 0 : Math.floor(S.equip / 4), wc = TIERS[wi].c;
+  ctx.save(); ctx.translate(hx + HD * 0.28, foot - HD * 0.32 + bob); ctx.rotate(sw);
+  ctx.shadowColor = wc; ctx.shadowBlur = S.equip >= 8 ? 14 : 0;
+  const bl = HD * 0.55; ctx.beginPath(); ctx.moveTo(-5, -8); ctx.lineTo(-5, -bl); ctx.lineTo(0, -bl - 10); ctx.lineTo(5, -bl); ctx.lineTo(5, -8); ctx.closePath();
+  const sg = ctx.createLinearGradient(-5, 0, 5, 0); sg.addColorStop(0, '#ffffff'); sg.addColorStop(1, wc); ctx.fillStyle = sg; ctx.fill();
+  ctx.shadowBlur = 0; ctx.lineWidth = 2.5; ctx.strokeStyle = '#1b1430'; ctx.stroke();
+  ctx.fillStyle = wc; ctx.fillRect(-12, -9, 24, 6); ctx.strokeRect(-12, -9, 24, 6);
+  ctx.fillStyle = '#6b4a2a'; ctx.fillRect(-3, -3, 6, 14); ctx.restore();
+  ctx.drawImage(ART.sprite('hero'), hx - HD / 2, foot - HD * 0.97 + bob, HD, HD);
 
   // 요괴
   if (mob) {
-    const size = (mob.boss ? 1.5 : 1) * Math.min(60, H * 0.27);
+    const size = (mob.boss ? 1.45 : 1) * Math.min(100, H * 0.42);
     const alpha = mob.dead ? Math.max(mob.dead / 0.25, 0) : 1;
     ctx.globalAlpha = alpha;
-    ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.beginPath(); ctx.ellipse(mob.x, H * 0.75, size * 0.5, 7, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.save(); ctx.translate(mob.x + (mob.hit > 0 ? 5 : 0), H * 0.72 + Math.sin(t * 4 + 1) * 3); ctx.scale(-1, 1);
-    if (mob.hit > 0) ctx.filter = 'brightness(2.2)';
-    ctx.font = `${size}px serif`; ctx.fillText(mob.e, 0, 0); ctx.filter = 'none'; ctx.restore();
+    ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.beginPath(); ctx.ellipse(mob.x, foot - 4, size * 0.34, 7, 0, 0, Math.PI * 2); ctx.fill();
+    const sq = mob.hit > 0 ? 1.08 : 1 + Math.sin(t * 4 + 1) * 0.02, dy = mob.dead ? (0.25 - mob.dead) * 60 : 0;
+    ctx.save(); ctx.translate(mob.x + (mob.hit > 0 ? 6 : 0), foot + dy); ctx.scale(sq, 2 - sq);
+    if (mob.hit > 0) ctx.filter = 'brightness(1.8)';
+    ctx.drawImage(ART.sprite(mob.e), -size / 2, -size * 0.97, size, size); ctx.filter = 'none'; ctx.restore();
     if (!mob.dead) {
-      const bw = mob.boss ? 120 : 70, bx = mob.x - bw / 2, by = H * 0.72 - size - 14;
+      const bw = mob.boss ? 120 : 70, bx = mob.x - bw / 2, by = foot - size * 0.92 - 10;
       ctx.fillStyle = 'rgba(0,0,0,.5)'; ctx.fillRect(bx, by, bw, 7);
       ctx.fillStyle = mob.boss ? '#ff5d6c' : '#4fd18b'; ctx.fillRect(bx, by, bw * Math.max(mob.hp / mob.max, 0), 7);
       if (mob.boss) { ctx.font = 'bold 11px sans-serif'; ctx.fillStyle = '#fff'; ctx.fillText('BOSS', mob.x, by - 2); }
@@ -460,9 +465,12 @@ function renderPanel() {
       <p style="font-size:12px">${S.maxStage < 15 ? '15 스테이지부터 환생할 수 있어요' : `환생 후 배율 x${B.soulMult(S.souls).toFixed(2)} → x${B.soulMult(S.souls + gain).toFixed(2)}`}</p>
       <div class="gacha-btns"><button class="buy purple" id="rebirth" ${gain ? '' : 'disabled'}>환생하기</button><button class="buy" id="rebirthAd" ${gain ? '' : 'disabled'}>📺 광고 보고 x2 환생</button></div></div>
       <div class="card"><p>무기, 보석, 영혼석은 유지됩니다. 막히는 구간에서 환생하면 이전보다 훨씬 빠르게 올라가요.<br>누적 환생 ${S.stats.rebirths}회 · 보유 영혼석 ${fmt(S.souls)}</p></div>
-      <div class="card"><h3>⚙️ 설정</h3><p style="display:flex;justify-content:space-between;align-items:center">자동 보스 도전 <button class="buy ${S.autoBoss ? 'green' : ''}" id="autoBoss" style="min-width:64px">${S.autoBoss ? 'ON' : 'OFF'}</button></p></div>`;
+      <div class="card"><h3>⚙️ 설정</h3><p style="display:flex;justify-content:space-between;align-items:center">자동 보스 도전 <button class="buy ${S.autoBoss ? 'green' : ''}" id="autoBoss" style="min-width:64px">${S.autoBoss ? 'ON' : 'OFF'}</button></p>
+      <p style="margin-top:10px">기기를 바꿀 때 저장 코드로 진행 상황을 옮길 수 있어요.</p><div class="gacha-btns"><button class="buy" id="exportSave">저장 코드 복사</button><button class="buy gem" id="importSave">저장 코드 불러오기</button></div>
+      <p style="margin-top:10px;font-size:12px"><a href="privacy.html" style="color:var(--muted)">개인정보처리방침</a></p></div>`;
     $('rebirth').onclick = () => rebirth(1); $('rebirthAd').onclick = () => rewarded('rebirth', () => rebirth(2));
     $('autoBoss').onclick = () => { S.autoBoss = !S.autoBoss; renderPanel(); };
+    $('exportSave').onclick = exportSave; $('importSave').onclick = importSave;
   } else if (tab === 'quest') {
     const today = dayKey(), canAtt = S.att.last !== today, day = (canAtt ? S.att.streak : S.att.streak - 1) % 7;
     const QS = quests();
@@ -483,7 +491,7 @@ function renderPanel() {
 function wcell(i, fresh) {
   const t = Math.floor(i / 4), c = S.inv[i] || 0;
   return `<div class="w ${c || fresh ? '' : 'locked'} ${S.equip === i && !fresh ? 'eq' : ''}" data-i="${fresh ? '' : i}" style="border-color:${fresh || S.equip === i ? TIERS[t].c : 'transparent'}">
-    <span class="gr" style="color:${TIERS[t].c}">${TIERS[t].n}${(i % 4) + 1}</span>${WICON[t]}${fresh ? '' : `<span class="bar"><i style="width:${Math.min(c / 5, 1) * 100}%"></i></span><span class="cnt">${c ? c + '/5' : ''}</span>`}</div>`;
+    <span class="gr" style="color:${TIERS[t].c}">${TIERS[t].n}${(i % 4) + 1}</span><img src="${ART.weapon(i)}" alt="" style="width:72%;height:72%">${fresh ? '' : `<span class="bar"><i style="width:${Math.min(c / 5, 1) * 100}%"></i></span><span class="cnt">${c ? c + '/5' : ''}</span>`}</div>`;
 }
 
 /* ---------------- 소환 ---------------- */
@@ -520,6 +528,23 @@ function rebirth(mult) {
   Object.assign(S, { gold: 0, stage: 1, wave: 1, maxStage: 1, farm: false, lv: { atk: 0, spd: 0, crit: 0, critd: 0, gold: 0 } });
   mob = null; flash = 0.6; toast(`🔮 영혼석 +${fmt(gain)}! 더 강해져서 돌아왔다!`);
   renderTop(); renderPanel(); save();
+}
+
+/* ---------------- 저장 코드 (기기 이전) ---------------- */
+function sum(str) { let h = 7; for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) >>> 0; return h.toString(36); }
+async function exportSave() {
+  save(); const j = JSON.stringify(S), code = 'NYANG1.' + btoa(unescape(encodeURIComponent(j))) + '.' + sum(j);
+  try { await navigator.clipboard.writeText(code); toast('저장 코드를 복사했어요. 메모장 등에 보관하세요'); }
+  catch { prompt('아래 코드를 복사해 보관하세요', code); }
+}
+function importSave() {
+  const code = (prompt('저장 코드를 붙여넣으세요') || '').trim(); if (!code) return;
+  try {
+    const [tag, body, chk] = code.split('.'); const j = decodeURIComponent(escape(atob(body)));
+    if (tag !== 'NYANG1' || sum(j) !== chk) throw 0;
+    const data = JSON.parse(j); if (!confirm(`최고 ${data.maxStage} 스테이지 · 영혼석 ${fmt(data.souls)} 저장을 불러올까요? 현재 진행은 덮어씁니다.`)) return;
+    S = Object.assign(fresh(), data); mob = null; save(); renderTop(); renderPanel(); toast('불러오기 완료!');
+  } catch { toast('올바른 저장 코드가 아니에요'); }
 }
 
 /* ---------------- 출석 / 임무 ---------------- */
