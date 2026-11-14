@@ -1,4 +1,12 @@
 'use strict';
+/* 구형 안드로이드 WebView(크롬 99 미만) 호환: roundRect 폴리필 */
+if (typeof CanvasRenderingContext2D !== 'undefined' && !CanvasRenderingContext2D.prototype.roundRect) {
+  CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
+    r = Math.min(typeof r === 'number' ? r : (r && r[0]) || 0, w / 2, h / 2);
+    this.moveTo(x + r, y); this.arcTo(x + w, y, x + w, y + h, r); this.arcTo(x + w, y + h, x, y + h, r);
+    this.arcTo(x, y + h, x, y, r); this.arcTo(x, y, x + w, y, r); this.closePath(); return this;
+  };
+}
 /* =====================================================================
    냥검객 키우기 — 아트 (모든 캐릭터를 코드로 그림, 외부 이미지 없음)
    스프라이트는 한 번 그려서 오프스크린 캔버스에 캐시한다.

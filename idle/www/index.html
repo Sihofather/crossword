@@ -72,7 +72,7 @@
   .gacha-btns { display: flex; gap: 8px; margin-top: 12px; }
   .gacha-btns .buy { flex: 1; padding: 12px; font-size: 15px; }
   .wgrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
-  .w { aspect-ratio: 1; border-radius: 12px; background: var(--panel2); display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; font-size: 24px; border: 2px solid transparent; }
+  .w { aspect-ratio: 1; min-height: 70px; border-radius: 12px; background: var(--panel2); display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; font-size: 24px; border: 2px solid transparent; }
   .w.locked { opacity: .25; filter: grayscale(1); }
   .w.eq { border-color: var(--gold); }
   .w .cnt { position: absolute; bottom: 2px; right: 5px; font-size: 10px; font-weight: 800; color: var(--text); }
@@ -89,7 +89,7 @@
   .tab .dot.show { display: block; }
 
   /* 모달 */
-  .modal { position: absolute; inset: 0; background: rgba(8,5,18,.75); display: none; align-items: center; justify-content: center; padding: 20px; z-index: 50; }
+  .modal { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(8,5,18,.75); display: none; align-items: center; justify-content: center; padding: 20px; z-index: 50; }
   .modal.show { display: flex; }
   .sheet { background: var(--panel); border: 1px solid var(--line); border-radius: 20px; padding: 22px 18px; width: 100%; max-width: 360px; text-align: center; animation: up .25s ease; }
   @keyframes up { from { transform: translateY(20px); opacity: 0; } }
@@ -159,7 +159,8 @@
 const B = {
   idx: (stage, wave) => (stage - 1) * 10 + (wave - 1),
   // 150 스테이지 이후 성장 곡선 완화 (숫자 오버플로 방지 · 후반 페이스 유지)
-  eff: i => i <= 1500 ? i : 1500 + (i - 1500) * 0.5,
+  // 9500 이후는 로그 곡선 → 사실상 무한히 진행해도 숫자가 유한하게 유지됨 (스테이지 수만 단위까지)
+  eff: i => i <= 1500 ? i : i <= 9500 ? 1500 + (i - 1500) * 0.5 : 5500 + 100 * Math.log(1 + (i - 9500) / 100),
   hp: (stage, wave) => 5 * Math.pow(1.12, B.eff(B.idx(stage, wave))) * (wave === 10 ? 12 : 1),
   goldDrop: (stage, wave) => 2.5 * Math.pow(1.115, B.eff(B.idx(stage, wave))) * (wave === 10 ? 10 : 1),
   bossTime: 30,
@@ -258,7 +259,7 @@ const fx = [];   // 파티클 / 데미지 텍스트
 function spawn() {
   const th = theme(), boss = S.wave === 10 && !S.farm;
   const w = boss ? 10 : S.wave;
-  const hp = B.hp(S.stage, w);
+  const hp = Math.min(B.hp(S.stage, w), 1e300);
   mob = { boss, hp, max: hp, x: W + 40, e: boss ? th.boss : th.mobs[(S.stage * 7 + S.wave) % th.mobs.length], hit: 0, dead: 0, w };
   if (boss) bossLeft = B.bossTime;
   atkTimer = 1 / aps();  // 도착 즉시 첫 공격
@@ -275,7 +276,7 @@ function hitMob(mult = 1, skill = false) {
 }
 function kill() {
   const g = B.goldDrop(S.stage, mob.w) * goldMult();
-  S.gold += g; S.stats.kills++; S.q.kills++;
+  S.gold = Math.min(S.gold + g, 1e305); S.stats.kills++; S.q.kills++;
   mob.dead = 0.25;
   for (let i = 0; i < 10; i++) fx.push({ t: 'p', x: W * 0.7, y: H * 0.6, vx: (Math.random() - .3) * 220, vy: -Math.random() * 260, life: 0.6, c: theme().sky[1] });
   fx.push({ t: 'coin', x: W * 0.7, y: H * 0.55, life: 0.7, v: g });
@@ -608,7 +609,11 @@ const SHOP = [
 function purchase(id) {
   const s = SHOP.find(x => x.id === id); if (!s || (s.done && s.done())) return;
   // 실제 앱: cordova-plugin-purchase (CdvPurchase.store) 로 상품 id 결제 → 승인 콜백에서 s.give()
-  if (window.CdvPurchase) { window.CdvPurchase.store.get(id)?.getOffer()?.order(); return; }
+  if (window.CdvPurchase) {
+    const offer = window.CdvPurchase.store.get(id)?.getOffer();
+    if (!offer) { toast('스토어 정보를 불러오는 중이에요. 잠시 후 다시 시도해 주세요'); return; }
+    offer.order(); return;
+  }
   modal(`<h2>${s.ic} ${s.name}</h2><p>${s.desc}</p><div class="big" style="color:var(--green)">${s.price}</div><p style="font-size:11px">테스트 빌드: 실제 결제되지 않습니다</p>
     <div class="btns"><button class="ghost" data-close>취소</button><button class="buy green" id="payOk">구매</button></div>`);
   $('payOk').onclick = () => { s.give(); closeModal(); toast('구매 완료! 감사합니다 🐱'); renderPanel(); renderTop(); save(); };
@@ -661,8 +666,9 @@ document.addEventListener('deviceready', () => {
     store.register(SHOP.map(s => ({ id: s.id, platform: Platform.GOOGLE_PLAY,
       type: s.id === 'starter' || s.id === 'noads' ? ProductType.NON_CONSUMABLE : ProductType.CONSUMABLE })));
     store.when().approved(tx => {
-      tx.products.forEach(p => { const s = SHOP.find(x => x.id === p.id); if (s && !(s.done && s.done())) s.give(); });
-      tx.finish(); save(); renderPanel(); renderTop(); toast('구매 완료! 감사합니다 🐱');
+      let given = false;
+      tx.products.forEach(p => { const s = SHOP.find(x => x.id === p.id); if (s && !(s.done && s.done())) { s.give(); given = true; } });
+      tx.finish(); save(); renderPanel(); renderTop(); if (given) toast('구매 완료! 감사합니다 🐱');
     });
     store.initialize([Platform.GOOGLE_PLAY]);
   }
